@@ -1,0 +1,227 @@
+Course_Code,Module_Name,Year,Semester,Credits,Module_Category
+CS11012,Fundamentals of Programming,1,1,2,GPA
+CS11021,Programming Laboratory,1,1,1,GPA
+CS11032,Foundation of Computer Science,1,1,2,GPA
+COE11013,Computer Systems Architecture,1,1,3,GPA
+CS11042,Fundamentals of Databases,1,1,2,GPA
+SE11012,Software Development Methodologies,1,1,2,GPA
+CM11033,Probability and Statistics,1,1,3,GPA
+CM11102,Mathematics for Computing,1,1,2,GPA
+DL1132,English: Basic Study Skills for CS/SE/CE,1,1,2,NON_GPA
+LS1052,Leadership Training,1,1,2,NON_GPA
+CS12012,Web Development,1,2,2,GPA
+CS12023,Object Oriented Programming,1,2,3,GPA
+CS12033,Computer Networks,1,2,3,GPA
+CS12041,Creative Media Tools,1,2,1,GPA
+SE12012,Software Analysis and Modelling,1,2,2,GPA
+CM12052,Discrete Mathematics,1,2,2,GPA
+COE12241,Fundamentals of Electronics,1,2,1,GPA
+COE12992,Collaborative Hardware Project,1,2,2,GPA
+DL2142,English: Advance Study Skills for CS/SE/CE,1,2,2,NON_GPA
+CS21012,Operating Systems,2,3,2,GPA
+CS21022,Data Structures and Algorithms,2,3,2,GPA
+CS21032,Advanced Object Oriented Programming,2,3,2,GPA
+CS21042,Advanced Computer Networks and Wireless Communication,2,3,2,GPA
+CS21052,Advanced Web Development,2,3,2,GPA
+SE21012,Requirement Engineering,2,3,2,GPA
+CM21032,Statistical Distributions and Inference,2,3,2,GPA
+CM21102,Calculus,2,3,2,GPA
+MF2112,Principles of Management,2,3,2,NON_GPA
+DL3152,Writing and Speaking Skills,2,3,2,NON_GPA
+CS22012,Advanced-Data Structures and Algorithms,2,4,2,GPA
+CS22023,Artificial Intelligence,2,4,3,GPA
+CS22993,Group Project in Software Development,2,4,3,GPA
+SE22013,Software Project Management,2,4,3,GPA
+SE22022,Software Architecture,2,4,2,GPA
+COE22032,Computer Interfacing and Microprocessors,2,4,2,GPA
+CM22112,Numerical Methods,2,4,2,GPA
+DL4162,Research Writing Skills,2,4,2,NON_GPA
+COE12012,Fundamentals of Electrical Engineering,1,2,2,GPA
+COE12022,Basic Electronics,1,2,2,GPA
+COE21013,Digital Electronics and Systems,2,3,3,GPA
+COE22012,Engineering Drawing,2,4,2,GPA
+COE22023,Advanced Computer Architecture,2,4,3,GPA
+DS11011,Fundamentals of Data Science,1,1,1,GPA
+DS11023,Probability and Statistics,1,1,3,GPA
+DS11032,Calculus I,1,1,2,GPA
+MF1122,Principles of Management,1,1,2,GPA
+LC1133,Introduction to Communication Skills,1,1,3,NON_GPA
+DS12013,Discrete Mathematics for Data Science,1,2,3,GPA
+DS12022,Linear Algebra I,1,2,2,GPA
+DS12033,Statistical Inference,1,2,3,GPA
+CS12052,Object Oriented Programming,1,2,2,GPA
+DS12042,Applied Statistical Computing,1,2,2,GPA
+MF1212,Business Economics,1,2,2,GPA
+LC1243,Fundamentals of Business Communication,1,2,3,GPA
+DS21012,Calculus II,2,3,2,GPA
+DS21022,Linear Algebra II,2,3,2,GPA
+DS21033,Regression Analysis,2,3,3,GPA
+CS21063,Data Structures and Algorithms,2,3,3,GPA
+DS21042,Programming for Data Science,2,3,2,GPA
+MF2123,Accounting and Finance,2,3,3,GPA
+LC2353,Advanced Communication Skills,2,3,3,NON_GPA
+DS22012,Categorical Data Analysis,2,4,2,GPA
+CS22032,Essentials of Artificial Intelligence,2,4,2,GPA
+DS22023,Data Mining and Data Warehousing,2,4,3,GPA
+SE22033,Software Engineering,2,4,3,GPA
+MF2222,Cost & Management Accounting,2,4,2,GPA
+DS22032,Business Intelligence and  Analytics,2,4,2,GPA
+LC2463,Conversation Analysis,2,4,3,NON_GPA
+CS31022,Research Methodology,3,5,2,GPA
+CS31032,Mobile Computing,3,5,2,GPA
+CS31042,Computer and Network Security,3,5,2,GPA
+CS31062,UX and UI Engineering,3,5,2,GPA
+CS31012,Essentials of Computer Law,3,5,2,NON_GPA
+CS31072,Advanced Database Techniques,3,5,2,GPA
+SE31012,Software Construction Technologies and Tools,3,5,2,GPA
+SE31022,Engineering Economics for Software,3,5,2,GPA
+CS31092,Digital Image Processing,3,5,2,GPA
+CS31102,Expert Systems and Logic Programming,3,5,2,GPA
+CS31112,Cloud Computing,3,5,2,GPA
+CS31122,Data Mining and Business Intelligence,3,5,2,GPA
+CS31132,Big Data Analytics,3,5,2,GPA
+CS31082,Distributed Computing,3,5,2,GPA
+COE31052,Enterprise System Administration,3,5,2,GPA
+COE31012,Micro Controllers and Embedded Systems,3,5,2,GPA
+COE31021,Embedded Systems Laboratory,3,5,1,GPA
+COE31032,Research Methodology,3,5,2,GPA
+COE31062,Digital Signal Processing,3,5,2,GPA
+COE31072,Design Project,3,5,2,GPA
+CS32042,Information Security,3,6,2,GPA
+CS32092,Machine Learning,3,6,2,GPA
+SE32992,Independent Research Study,3,6,2,GPA
+SE32012,Software Verification and Validation,3,6,2,GPA
+SE32022,Rapid Application Development,3,6,2,GPA
+CM32051,Statistical Tools for Computing,3,6,1,GPA
+CS32012,Computer Graphics and Visualization,3,6,2,GPA
+CS32022,Automata Theory,3,6,2,GPA
+CS32032,Complex Systems and Agent Technology,3,6,2,GPA
+CS32082,Natural Language Processing,3,6,2,GPA
+CS32102,Distributed Systems,3,6,2,GPA
+CS32112,Advanced Mobile Computing,3,6,2,GPA
+IT32262,Geoinformatics,3,6,2,GPA
+CM32013,Operational Research,3,6,3,GPA
+CS32062,Nature Inspired Computing,3,6,2,GPA
+COE32012,Computer Systems Engineering,3,6,2,GPA
+COE32022,Digital Systems Design,3,6,2,GPA
+COE32032,Electrical Properties of Materials,3,6,2,GPA
+COE32042,Robotics and Automation,3,6,2,GPA
+COE32052,Telecommunication Networks,3,6,2,GPA
+CS4012,Emerging Trends in Computing,4,7,2,GPA
+CS4022,Theory of Programing Languages,4,7,2,GPA
+CS4032,Natural Language Processing,4,7,2,GPA
+CS4042,Machine Learning,4,7,2,GPA
+SE4042,Software Quality Assuarance,4,7,2,GPA
+CS4062,Artificial Cognitive Systems,4,7,2,GPA
+COE4022,Advanced Operating Systems,4,7,2,GPA
+COE4042,Robotics and Automation,4,7,2,GPA
+SE4012,Formal Methods and Software Verification,4,7,2,GPA
+SE4022,Software Evolution,4,7,2,GPA
+SE4042,Software Quality Assuarance,4,7,2,GPA
+COE4012,Semiconductors and Solid state devices,4,7,2,GPA
+COE4033,VLSI Design and Fabrication,4,7,3,GPA
+CS4092,Distributed Systems,4,7,2,GPA
+SE42999,Individual Research Project,4,8,9,GPA
+SE42986,Industrial Training,4,8,6,GPA
+CS42999,Individual Research Project,4,8,9,GPA
+CS42986,Industrial Training,4,8,6,GPA
+COE42999,Individual Research Project,4,8,9,GPA
+COE42986,Industrial Training,4,8,6,GPA
+CS31142,Advanced Database Management Systems,3,5,2,GPA
+CS31153,Machine Learning,3,5,3,GPA
+DS31012,Multivariate Data Analysis,3,5,2,GPA
+CS31162,Computer Networks,3,5,2,GPA
+DS31042,Professional Practices and IT Law,3,5,2,GPA
+DS31032,Bayesian Data Analysis,3,5,2,GPA
+DS31023,Research Methodology,3,5,3,GPA
+MF3113,Operations Research,3,5,3,GPA
+DS32013,Big Data Analytics,3,6,3,GPA
+DS32023,Time Series Analysis,3,6,3,GPA
+DS32993,Group Project in Applied Data Analytics ,3,6,3,GPA
+MF3212,Operation Management,3,6,2,GPA
+CS32122,Cloud Computing,3,6,2,GPA
+CS32132,Cyber Security,3,6,2,GPA
+CS32143,Deep Learning,3,6,3,GPA
+LC3673,Discourse Communication,3,6,3,GPA
+CS41172,Image Processing and Computer Vision,4,7,2,GPA
+DS41012,Data Management and Governance,4,7,2,GPA
+SE41052,Project Management for Data Science,4,7,2,GPA
+CS41142,Natural Language Processing,4,7,2,GPA
+CS41052,Semantic Web and Ontology,4,7,2,GPA
+DS41022,Spatial Data Analysis,4,7,2,GPA
+DS41032,Emerging Trends in Data Science,4,7,2,GPA
+CS41182,Parallel Computing,4,7,2,GPA
+CS41152,Information Security,4,7,2,GPA
+MF4122,Strategic Business Analysis,4,7,2,GPA
+DS42999,Individual Research Project,4,8,9,GPA
+DS42986,Industrial Training,4,7,6,GPA
+ITIC1113,Information Technology Concepts,1,1,3,GPA
+ITIC1123,Fundamentals of Programming,1,1,3,GPA
+ITIC1132,Fundamentals of Visual Computing,1,1,2,GPA
+ITIC1112,Fundamentals of Mathematics,1,1,2,GPA
+ITIC1143,Fundamentals of Electrical Engineering,1,1,3,GPA
+ITIC1152,Programming Laboratory,1,1,2,GPA
+ITIC1172,Operating Systems,1,1,2,GPA
+DL1112,English I,1,1,2,NON_GPA
+ITIC1213,Computer Architecture and Organization,1,2,3,GPA
+ITIC1223,Basics of Digital and Analog Electronics,1,2,3,GPA
+ITIC1233,Database Systems,1,2,3,GPA
+ITIC1243,Web Design and Development,1,2,3,GPA
+ITIC1212,Probability and Statistics,1,2,2,GPA
+ITIC1282,Skill Development Project I,1,2,2,GPA
+ITIC1272,Principles of Management,1,2,2,NON_GPA
+LC1211,Communication Skills I,1,2,1,NON_GPA
+DL1211,English II,1,2,1,NON_GPA
+ITIC2113,Software Engineering,2,3,3,GPA
+ITIC2123,Object Oriented Programming,2,3,3,GPA
+ITIC2133,Data Communication and Networking,2,3,3,GPA
+ITIC2143,Data Structures and Algorithms,2,3,3,GPA
+ITIC2153,Professional Ethics,2,3,3,GPA
+ITIC2112,Calculus I,2,3,2,GPA
+ITIC2162,Career Development Plan,2,3,2,GPA
+LC2111,Communication Skills II,2,3,1,NON_GPA
+DL2111,English III,2,3,3,NON_GPA
+ITIC2212,System Administration and Maintenance,2,4,2,GPA
+ITIC2223,Advanced Programming,2,4,3,GPA
+ITIC2232,Cyber Security,2,4,2,GPA
+ITIC2243,Systems Analysis and Design,2,4,3,GPA
+ITIC2252,Graphic Designing and Animation,2,4,2,GPA
+ITIC2262,Open-Source Development,2,4,2,GPA
+ITIC2272,Skill Development Project II,2,4,2,GPA
+ITIC2282,Information Technology Law,2,4,2,NON_GPA
+TETE2211,Tamil basics for beginners,2,4,1,NON_GPA
+TETE2221,Sinhala basics for beginners,2,4,1,NON_GPA
+LC2211,Communication Skills III,2,4,1,NON_GPA
+DL2211,English IV,2,4,1,NON_GPA
+ITIC3112,Mobile Application Development,3,5,2,GPA
+ITIC3123,Information Security,3,5,3,GPA
+ITIC3132,IT Project Management,3,5,2,GPA
+ITIC3142,IOT Applications,3,5,2,GPA
+ITIC3152,Human Computer Interaction,3,5,2,GPA
+ITIC3163,Management Information Systems,3,5,3,GPA
+TETE3112,Dancing,3,5,2,NON_GPA
+TETE3122,Photography,3,5,2,NON_GPA
+LC3111,Communication Skills IV,3,5,1,NON_GPA
+DL3111,English V,3,5,1,NON_GPA
+ITIC3216,Industrial Training,3,6,6,GPA
+ITIC4113,Embeded Systems,4,7,3,GPA
+ITIC4122,Advanced Software Systems Design,4,7,2,GPA
+ITIC4132,Research Methodology,4,7,2,GPA
+ITIC4143,Emerging Technologies in ICT,4,7,3,GPA
+ITIC4152,Data Science,4,7,2,GPA
+ITIE4113,Advanced Computer Networks,4,7,3,GPA
+ITIE4123,Game Development,4,7,3,GPA
+ITIE4133,E-Commerce,4,7,3,GPA
+ITIE4143,UI and UX Engineering,4,7,3,GPA
+ITIC4212,Artificial Intelligence,4,8,2,GPA
+ITIC4223,Cloud Computing,4,8,3,GPA
+ITIC4233,Software Quality Assurance,4,8,2,GPA
+ITIC4246,Skill Development Project – Individual,4,8,6,GPA
+ITIC4252,Entrepreneurship,4,8,2,GPA
+
+
+
+
+
+
+
