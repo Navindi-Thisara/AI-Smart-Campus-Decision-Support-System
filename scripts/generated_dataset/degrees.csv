@@ -1,0 +1,6 @@
+Degree_ID,Degree_Name,Faculty_ID,Department,Duration_Years
+D001,BSc (Hons) Software Engineering,F001,Computer Science,4
+D002,BSc (Hons) Computer Science,F001,Computer Science,4
+D003,BSc (Hons) Computer Engineering,F001,Computer Engineering,4
+D004,BSc (Hons) in Data Science & Business Analytics,F001,Computational Mathematics,4
+D005,BT (Hons) in Information and Communication Technology,F002,Biosystems Technology,4
