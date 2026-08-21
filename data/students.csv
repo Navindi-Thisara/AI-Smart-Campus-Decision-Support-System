@@ -1,0 +1,26 @@
+Student_ID,Registration_No,Name,Gender,Intake,Degree_ID,Current_Year,Current_Semester,Current_SGPA,Previous_SGPA,FGPA,Attendance_Percentage,Attendance_Approved,Fee_Paid,Exam_Eligibility,Repeated_Courses,Student_Status,Academic_Risk
+S0001,D/BSE/25/0005,Student_A,Female,42,D001,1,1,3.5714,0.0000,3.5714,94,Yes,Yes,Eligible,0,Completed,Low Risk
+S0002,D/BSE/25/0006,Student_B,Female,42,D001,1,1,2.5571,0.0000,2.5571,82,Yes,Yes,Eligible,0,Completed,Medium Risk
+S0003,D/BSE/25/0012,Student_C,Male,42,D001,1,1,3.7571,0.0000,3.7571,96,Yes,Yes,Eligible,0,Completed,Low Risk
+S0004,D/BSE/25/0013,Student_D,Male,42,D001,1,1,2.3905,0.0000,2.3905,72,No,Yes,Not Eligible,1,Not Completed,Medium Risk
+S0005,D/BSE/25/0019,Student_E,Male,42,D001,1,1,2.6476,0.0000,2.6476,78,Yes,Yes,Eligible,0,Completed,Medium Risk
+S0006,D/BCS/25/0006,Student_F,Male,42,D002,1,1,3.9571,0.0000,3.9571,97,Yes,Yes,Eligible,0,Completed,Low Risk
+S0007,D/BCS/25/0016,Student_G,Male,42,D002,1,1,3.7095,0.0000,3.7095,86,Yes,Yes,Eligible,0,Completed,Low Risk
+S0008,D/BCS/25/0018,Student_H,Male,42,D002,1,1,2.4381,0.0000,2.4381,68,No,Yes,Not Eligible,1,Not Completed,Medium Risk
+S0009,D/BCS/25/0023,Student_I,Male,42,D002,1,1,3.7857,0.0000,3.7857,91,Yes,Yes,Eligible,0,Completed,Low Risk
+S0010,D/BCS/25/0029,Student_J,Male,42,D002,1,1,3.0952,0.0000,3.0952,83,Yes,Yes,Eligible,0,Completed,Low Risk
+S0011,D/COE/25/0002,Student_K,Male,42,D003,1,1,3.8048,0.0000,3.8048,95,Yes,Yes,Eligible,0,Completed,Low Risk
+S0012,D/COE/25/0008,Student_L,Male,42,D003,1,1,3.8048,0.0000,3.8048,92,Yes,Yes,Eligible,0,Completed,Low Risk
+S0013,D/COE/25/0019,Student_M,Male,42,D003,1,1,2.6619,0.0000,2.6619,76,Yes,Yes,Eligible,0,Completed,Medium Risk
+S0014,D/COE/25/0021,Student_N,Male,42,D003,1,1,3.5714,0.0000,3.5714,89,Yes,Yes,Eligible,0,Completed,Low Risk
+S0015,D/COE/25/0025,Student_O,Male,42,D003,1,1,3.0333,0.0000,3.0333,79,Yes,Yes,Eligible,0,Completed,Low Risk
+S0016,D/DBA/25/0006,Student_P,Female,42,D004,1,1,2.3812,0.0000,2.3812,94,Yes,Yes,Eligible,0,Completed,Medium Risk
+S0017,D/DBA/25/0011,Student_Q,Male,42,D004,1,1,3.7875,0.0000,3.7875,82,Yes,Yes,Eligible,0,Completed,Low Risk
+S0018,D/DBA/25/0031,Student_R,Male,42,D004,1,1,2.1125,0.0000,2.1125,96,Yes,Yes,Eligible,2,Not Completed,High Risk
+S0019,D/DBA/25/0035,Student_S,Male,42,D004,1,1,3.8625,0.0000,3.8625,72,Yes,Yes,Eligible,0,Completed,Low Risk
+S0020,D/DBA/25/0027,Student_T,Male,42,D004,1,1,2.3312,0.0000,2.3312,78,Yes,Yes,Eligible,1,Not Completed,Medium Risk
+S0021,D/ICT/25/0001,Student_U,Male,42,D005,1,1,3.4211,0.0000,3.4211,92,Yes,Yes,Eligible,0,Completed,Low Risk
+S0022,D/ICT/25/0002,Student_V,Female,42,D005,1,1,3.1789,0.0000,3.1789,88,Yes,Yes,Eligible,0,Completed,Low Risk
+S0023,D/ICT/25/0003,Student_W,Male,42,D005,1,1,2.0211,0.0000,2.0211,95,Yes,Yes,Eligible,1,Not Completed,Medium Risk
+S0024,D/ICT/25/0004,Student_X,Female,42,D005,1,1,3.6789,0.0000,3.6789,85,Yes,Yes,Eligible,0,Completed,Low Risk
+S0025,D/ICT/25/0005,Student_Y,Male,42,D005,1,1,3.0053,0.0000,3.0053,84,Yes,Yes,Eligible,0,Completed,Low Risk

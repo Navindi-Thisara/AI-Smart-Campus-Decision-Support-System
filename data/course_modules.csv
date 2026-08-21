@@ -99,11 +99,13 @@ CS32032,Complex Systems and Agent Technology,3,6,2,GPA
 CS32082,Natural Language Processing,3,6,2,GPA
 CS32102,Distributed Systems,3,6,2,GPA
 CS32112,Advanced Mobile Computing,3,6,2,GPA
+CS32992,Independent Research Study,3,6,2,GPA
 IT32262,Geoinformatics,3,6,2,GPA
 CM32013,Operational Research,3,6,3,GPA
 CS32062,Nature Inspired Computing,3,6,2,GPA
 COE32012,Computer Systems Engineering,3,6,2,GPA
 COE32022,Digital Systems Design,3,6,2,GPA
+COE32992,Independent Research Study,3,6,2
 COE32032,Electrical Properties of Materials,3,6,2,GPA
 COE32042,Robotics and Automation,3,6,2,GPA
 COE32052,Telecommunication Networks,3,6,2,GPA
@@ -117,7 +119,6 @@ COE4022,Advanced Operating Systems,4,7,2,GPA
 COE4042,Robotics and Automation,4,7,2,GPA
 SE4012,Formal Methods and Software Verification,4,7,2,GPA
 SE4022,Software Evolution,4,7,2,GPA
-SE4042,Software Quality Assuarance,4,7,2,GPA
 COE4012,Semiconductors and Solid state devices,4,7,2,GPA
 COE4033,VLSI Design and Fabrication,4,7,3,GPA
 CS4092,Distributed Systems,4,7,2,GPA
