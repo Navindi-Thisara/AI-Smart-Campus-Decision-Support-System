@@ -1,13 +1,23 @@
 """
-Predict Next Semester SGPA
+Next Semester SGPA Prediction Service
 
-Loads the trained Neural Network and scaler and predicts the next semester SGPA for a student.
+Loads the validated Neural Network and StandardScaler and predicts the next semester SGPA for a student.
 
 Model:
     models/next_sgpa_neural_network.keras
 
 Scaler:
     models/next_sgpa_scaler.pkl
+
+Input features:
+    Previous_SGPA
+    Current_SGPA
+    Repeated_Courses
+    Current_Year
+    Current_Semester
+
+Target:
+    Next_SGPA
 """
 
 from pathlib import Path
@@ -19,8 +29,17 @@ import tensorflow as tf
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-MODEL_PATH = PROJECT_ROOT / "models" / "next_sgpa_neural_network.keras"
-SCALER_PATH = PROJECT_ROOT / "models" / "next_sgpa_scaler.pkl"
+MODEL_PATH = (
+    PROJECT_ROOT
+    / "models"
+    / "next_sgpa_neural_network.keras"
+)
+
+SCALER_PATH = (
+    PROJECT_ROOT
+    / "models"
+    / "next_sgpa_scaler.pkl"
+)
 
 FEATURES = [
     "Previous_SGPA",
@@ -30,9 +49,12 @@ FEATURES = [
     "Current_Semester",
 ]
 
-# LOAD MODEL
+TARGET = "Next_SGPA"
+
 def load_prediction_model():
-    """Load trained Neural Network and scaler."""
+    """
+    Load the trained Neural Network and StandardScaler.
+    """
 
     if not MODEL_PATH.exists():
         raise FileNotFoundError(
@@ -44,11 +66,43 @@ def load_prediction_model():
             f"Scaler not found:\n{SCALER_PATH}"
         )
 
-    print("Loading Neural Network...")
-    model = tf.keras.models.load_model(MODEL_PATH)
+    model = tf.keras.models.load_model(
+        MODEL_PATH
+    )
 
-    print("Loading feature scaler...")
-    scaler = joblib.load(SCALER_PATH)
+    scaler = joblib.load(
+        SCALER_PATH
+    )
+
+    # Verify model input
+    if model.input_shape[-1] != len(FEATURES):
+        raise ValueError(
+            "Model feature count does not match expected features.\n"
+            f"Expected: {len(FEATURES)}\n"
+            f"Model:    {model.input_shape[-1]}"
+        )
+
+    # Verify scaler
+    if not hasattr(scaler, "feature_names_in_"):
+        raise ValueError(
+            "Saved scaler does not contain feature names."
+        )
+
+    scaler_features = list(
+        scaler.feature_names_in_
+    )
+
+    if scaler_features != FEATURES:
+        raise ValueError(
+            "Scaler feature order does not match expected features.\n"
+            f"Expected: {FEATURES}\n"
+            f"Scaler:   {scaler_features}"
+        )
+
+    if scaler.n_features_in_ != len(FEATURES):
+        raise ValueError(
+            "Scaler feature count does not match expected features."
+        )
 
     return model, scaler
 
@@ -60,8 +114,37 @@ def validate_input(
     current_year,
     current_semester,
 ):
-    """Validate prediction input values."""
+    """
+    Validate prediction input values.
+    """
 
+    # Convert numeric values safely
+    try:
+        previous_sgpa = float(previous_sgpa)
+        current_sgpa = float(current_sgpa)
+        repeated_courses = int(repeated_courses)
+        current_year = int(current_year)
+        current_semester = int(current_semester)
+    except (TypeError, ValueError):
+        raise ValueError(
+            "All prediction inputs must be numeric."
+        )
+
+    # Reject NaN / infinity
+    numeric_values = [
+        previous_sgpa,
+        current_sgpa,
+    ]
+
+    if not all(
+        np.isfinite(value)
+        for value in numeric_values
+    ):
+        raise ValueError(
+            "SGPA values must be finite numbers."
+        )
+
+    # SGPA validation
     if not 0.0 <= previous_sgpa <= 4.0:
         raise ValueError(
             "Previous_SGPA must be between 0.0 and 4.0."
@@ -72,27 +155,34 @@ def validate_input(
             "Current_SGPA must be between 0.0 and 4.0."
         )
 
+    # Repeated courses
     if repeated_courses < 0:
         raise ValueError(
             "Repeated_Courses cannot be negative."
         )
 
+    # Year
     if current_year < 1:
         raise ValueError(
             "Current_Year must be at least 1."
         )
 
-    if current_semester < 1:
-        raise ValueError(
-            "Current_Semester must be at least 1."
-        )
-
-    if current_semester > 8:
+    # Semester
+    if not 1 <= current_semester <= 8:
         raise ValueError(
             "Current_Semester must be between 1 and 8."
         )
 
+    return (
+        previous_sgpa,
+        current_sgpa,
+        repeated_courses,
+        current_year,
+        current_semester,
+    )
 
+
+# PREDICTION
 def predict_next_sgpa(
     model,
     scaler,
@@ -102,9 +192,17 @@ def predict_next_sgpa(
     current_year,
     current_semester,
 ):
-    """Predict next semester SGPA."""
+    """
+    Predict the student's next semester SGPA.
+    """
 
-    validate_input(
+    (
+        previous_sgpa,
+        current_sgpa,
+        repeated_courses,
+        current_year,
+        current_semester,
+    ) = validate_input(
         previous_sgpa,
         current_sgpa,
         repeated_courses,
@@ -112,8 +210,7 @@ def predict_next_sgpa(
         current_semester,
     )
 
-    # Create input dataframe in exactly the same
-    # feature order used during training
+    # Create input using EXACT training feature names/order
     input_data = pd.DataFrame(
         [
             {
@@ -123,11 +220,14 @@ def predict_next_sgpa(
                 "Current_Year": current_year,
                 "Current_Semester": current_semester,
             }
-        ]
+        ],
+        columns=FEATURES,
     )
 
-    # Scale using the scaler fitted during training.
-    scaled_input = scaler.transform(input_data[FEATURES])
+    # Scale using scaler fitted ONLY on training data
+    scaled_input = scaler.transform(
+        input_data[FEATURES]
+    )
 
     # Neural Network prediction
     prediction = model.predict(
@@ -135,12 +235,67 @@ def predict_next_sgpa(
         verbose=0,
     )
 
-    predicted_sgpa = float(prediction[0][0])
+    predicted_sgpa = float(
+        prediction[0][0]
+    )
 
-    # Keep prediction within valid GPA range
-    predicted_sgpa = max(0.0, min(4.0, predicted_sgpa))
+    # Validate model output
+    if not np.isfinite(predicted_sgpa):
+        raise ValueError(
+            "Neural Network produced an invalid prediction."
+        )
 
-    return round(predicted_sgpa, 4)
+    # GPA must be between 0 and 4
+    predicted_sgpa = np.clip(
+        predicted_sgpa,
+        0.0,
+        4.0,
+    )
+
+    return round(
+        float(predicted_sgpa),
+        4,
+    )
+
+
+# PREDICTION FROM DICTIONARY
+def predict_from_dict(model, scaler, data):
+    """
+    Predict Next_SGPA from a dictionary.
+
+    Useful later for REST API integration.
+
+    Example:
+
+        data = {
+            "Previous_SGPA": 3.20,
+            "Current_SGPA": 3.45,
+            "Repeated_Courses": 0,
+            "Current_Year": 2,
+            "Current_Semester": 4
+        }
+    """
+
+    missing_features = [
+        feature
+        for feature in FEATURES
+        if feature not in data
+    ]
+
+    if missing_features:
+        raise ValueError(
+            f"Missing required features: {missing_features}"
+        )
+
+    return predict_next_sgpa(
+        model=model,
+        scaler=scaler,
+        previous_sgpa=data["Previous_SGPA"],
+        current_sgpa=data["Current_SGPA"],
+        repeated_courses=data["Repeated_Courses"],
+        current_year=data["Current_Year"],
+        current_semester=data["Current_Semester"],
+    )
 
 
 # COMMAND-LINE TEST
@@ -151,26 +306,22 @@ def main():
     print("=" * 70)
 
     print()
-    print("Project root:")
-    print(PROJECT_ROOT)
-
-    print()
-    print("Model:")
-    print(MODEL_PATH)
-
-    print()
-    print("Scaler:")
-    print(SCALER_PATH)
-
-    print()
-    model, scaler = load_prediction_model()
-
-    print()
-    print("=" * 70)
-    print("ENTER STUDENT INFORMATION")
-    print("=" * 70)
+    print(f"Model : {MODEL_PATH}")
+    print(f"Scaler: {SCALER_PATH}")
 
     try:
+
+        print()
+        print("Loading model and scaler...")
+
+        model, scaler = load_prediction_model()
+
+        print("Model and scaler loaded successfully.")
+
+        print()
+        print("=" * 70)
+        print("ENTER STUDENT INFORMATION")
+        print("=" * 70)
 
         previous_sgpa = float(
             input("Previous SGPA: ")
@@ -207,8 +358,33 @@ def main():
         print("PREDICTION RESULT")
         print("=" * 70)
 
+        print()
         print(
-            f"Predicted Next Semester SGPA: {predicted_sgpa:.4f}"
+            f"Predicted Next Semester SGPA: "
+            f"{predicted_sgpa:.4f}"
+        )
+
+        print()
+        print("Input features:")
+
+        print(
+            f"Previous_SGPA     : {previous_sgpa:.4f}"
+        )
+
+        print(
+            f"Current_SGPA      : {current_sgpa:.4f}"
+        )
+
+        print(
+            f"Repeated_Courses  : {repeated_courses}"
+        )
+
+        print(
+            f"Current_Year      : {current_year}"
+        )
+
+        print(
+            f"Current_Semester  : {current_semester}"
         )
 
         print()
@@ -216,11 +392,13 @@ def main():
         print("PREDICTION COMPLETE")
         print("=" * 70)
 
-    except ValueError as e:
+    except ValueError as error:
 
         print()
-        print("ERROR:")
-        print(e)
+        print("=" * 70)
+        print("INPUT ERROR")
+        print("=" * 70)
+        print(error)
 
 
 if __name__ == "__main__":
