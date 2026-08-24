@@ -1,0 +1,2 @@
+Student_ID,Degree_ID,Intake,Gender,Current_Year,Current_Semester,Previous_SGPA,Current_SGPA,Repeated_Courses,Next_SGPA,Removal_Reason
+S1793,D005,40,Male,3,5,2.6875,2.2714,14,0.0,Next_SGPA <= 0

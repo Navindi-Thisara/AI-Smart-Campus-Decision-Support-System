@@ -1,0 +1,310 @@
+======================================================================
+FINAL ML DATASET VALIDATION
+======================================================================
+
+Dataset:
+D:\Projects\AI-Smart-Campus-Decision-Support-System\data\ml\next_semester_gpa_dataset_clean.csv
+
+Rows: 6129
+Columns: 10
+
+======================================================================
+1. COLUMN VALIDATION
+======================================================================
+
+Actual columns:
+['Student_ID', 'Degree_ID', 'Intake', 'Gender', 'Current_Year', 'Current_Semester', 'Previous_SGPA', 'Current_SGPA', 'Repeated_Courses', 'Next_SGPA']
+
+Missing required columns: 0
+
+Unexpected columns: 0
+
+======================================================================
+2. DATA TYPE VALIDATION
+======================================================================
+
+Data types:
+Student_ID           str
+Degree_ID            str
+Intake               int64
+Gender               str
+Current_Year         int64
+Current_Semester     int64
+Previous_SGPA        float64
+Current_SGPA         float64
+Repeated_Courses     int64
+Next_SGPA            float64
+
+======================================================================
+3. MISSING VALUE VALIDATION
+======================================================================
+
+Total missing cells: 0
+
+No missing values found: PASS
+
+======================================================================
+4. GPA RANGE VALIDATION
+======================================================================
+Previous_SGPA        Invalid: 0
+Current_SGPA         Invalid: 0
+Next_SGPA            Invalid: 0
+
+======================================================================
+5. ZERO Next_SGPA VALIDATION
+======================================================================
+
+Next_SGPA = 0 records: 0
+
+Zero Next_SGPA records: PASS
+
+======================================================================
+6. PREVIOUS_SGPA → CURRENT_SGPA CONSISTENCY
+======================================================================
+
+Consecutive semester transitions checked: 4103
+Inconsistent Previous_SGPA values: 0
+
+Previous_SGPA consistency: PASS
+
+======================================================================
+7. CURRENT_SGPA → NEXT_SGPA CONSISTENCY
+======================================================================
+
+Consecutive transitions checked: 4103
+Next_SGPA mismatches: 0
+
+Current_SGPA → Next_SGPA consistency: PASS
+
+======================================================================
+8. DUPLICATE STUDENT-SEMESTER CHECK
+======================================================================
+
+Duplicate rows: 0
+Duplicate student-semester groups: 0
+
+Duplicate Student + Semester: PASS
+
+======================================================================
+9. SEMESTER RANGE VALIDATION
+======================================================================
+
+Invalid semester values: 0
+Invalid year values: 0
+
+======================================================================
+10. YEAR / SEMESTER LOGIC
+======================================================================
+
+Invalid Year/Semester combinations: 0
+
+Year/Semester logic: PASS
+
+======================================================================
+11. STUDENT SEMESTER COVERAGE
+======================================================================
+
+Unique students: 2026
+Minimum records per student: 1
+Maximum records per student: 6
+Average records per student: 3.03
+
+Records per student distribution:
+1    463
+2    423
+3    390
+4    324
+5    202
+6    224
+
+======================================================================
+12. REPEATED_COURSES VALIDATION
+======================================================================
+
+Invalid Repeated_Courses values: 0
+
+Repeated_Courses range: PASS
+
+Maximum Repeated_Courses: 36
+
+======================================================================
+13. CATEGORICAL VALUE VALIDATION
+======================================================================
+
+Gender unique values:
+Gender
+Male      4065
+Female    2064
+
+======================================================================
+14. INTAKE VALIDATION
+======================================================================
+
+Unique Intake values:
+Intake
+39    2354
+40    2466
+41    1309
+
+======================================================================
+15. DEGREE VALIDATION
+======================================================================
+
+Unique Degree_ID values:
+Degree_ID
+D001    1635
+D002    1490
+D003    1128
+D004     778
+D005    1098
+
+======================================================================
+16. Next_SGPA TARGET DISTRIBUTION
+======================================================================
+
+Descriptive statistics:
+count    6129.000000
+mean        3.408580
+std         0.492822
+min         1.300000
+25%         3.118200
+50%         3.518800
+75%         3.800000
+max         4.000000
+
+Distribution:
+Next_SGPA
+(-0.001, 1.0]       0
+(1.0, 2.0]         76
+(2.0, 2.5]        285
+(2.5, 3.0]        878
+(3.0, 3.5]       1748
+(3.5, 4.0]       3142
+
+Percentage distribution:
+Next_SGPA
+(-0.001, 1.0]     0.00
+(1.0, 2.0]        1.24
+(2.0, 2.5]        4.65
+(2.5, 3.0]       14.33
+(3.0, 3.5]       28.52
+(3.5, 4.0]       51.26
+
+======================================================================
+17. NUMERIC FEATURE STATISTICS
+======================================================================
+       Previous_SGPA  Current_SGPA  Repeated_Courses  Next_SGPA
+count      6129.0000     6129.0000         6129.0000  6129.0000
+mean          3.4064        3.4081            0.4614     3.4086
+std           0.4882        0.4887            2.0031     0.4928
+min           1.0875        1.0875            0.0000     1.3000
+25%           3.1235        3.1214            0.0000     3.1182
+50%           3.5125        3.5176            0.0000     3.5188
+75%           3.7941        3.7947            0.0000     3.8000
+max           4.0000        4.0000           36.0000     4.0000
+
+======================================================================
+18. CORRELATION ANALYSIS
+======================================================================
+                  Previous_SGPA  Current_SGPA  Repeated_Courses  Next_SGPA
+Previous_SGPA            1.0000        0.8086           -0.4423     0.8050
+Current_SGPA             0.8086        1.0000           -0.4254     0.8029
+Repeated_Courses        -0.4423       -0.4254            1.0000    -0.4109
+Next_SGPA                0.8050        0.8029           -0.4109     1.0000
+
+======================================================================
+19. CORRELATION WITH Next_SGPA
+======================================================================
+Previous_SGPA       0.8050
+Current_SGPA        0.8029
+Repeated_Courses   -0.4109
+
+======================================================================
+20. TARGET LEAKAGE CHECK
+======================================================================
+Intake               Identical to target: 0.00%
+Current_Year         Identical to target: 1.32%
+Current_Semester     Identical to target: 1.11%
+Previous_SGPA        Identical to target: 2.97%
+Current_SGPA         Identical to target: 3.18%
+Repeated_Courses     Identical to target: 0.03%
+
+No obvious numeric target leakage detected.
+
+======================================================================
+21. CURRENT_SGPA = NEXT_SGPA CHECK
+======================================================================
+
+Same Current_SGPA and Next_SGPA: 195
+Percentage: 3.18%
+
+======================================================================
+22. PREVIOUS_SGPA = CURRENT_SGPA CHECK
+======================================================================
+
+Same Previous_SGPA and Current_SGPA: 182
+Percentage: 2.97%
+
+======================================================================
+23. OUTLIER CHECK
+======================================================================
+
+Previous_SGPA:
+  Q1: 3.1235
+  Q3: 3.7941
+  IQR: 0.6706
+  Lower bound: 2.1176
+  Upper bound: 4.8000
+  Outliers: 107
+
+Current_SGPA:
+  Q1: 3.1214
+  Q3: 3.7947
+  IQR: 0.6733
+  Lower bound: 2.1114
+  Upper bound: 4.8047
+  Outliers: 111
+
+Next_SGPA:
+  Q1: 3.1182
+  Q3: 3.8000
+  IQR: 0.6818
+  Lower bound: 2.0955
+  Upper bound: 4.8227
+  Outliers: 105
+
+======================================================================
+24. FINAL VALIDATION SUMMARY
+======================================================================
+
+Validation checks:
+Required columns                              [PASS]
+No missing values                             [PASS]
+GPA values valid                              [PASS]
+No zero Next_SGPA                             [PASS]
+No duplicate Student + Semester               [PASS]
+Valid year/semester                           [PASS]
+Valid year/semester combination               [PASS]
+Previous_SGPA consistency                     [PASS]
+Next_SGPA consistency                         [PASS]
+Repeated_Courses valid                        [PASS]
+
+Passed: 10/10
+
+======================================================================
+INTERPRETATION
+======================================================================
+
+This validation checks structural and logical quality of the
+next-semester GPA prediction dataset.
+
+A CHECK result does not automatically mean that the dataset is
+wrong. Some checks, especially GPA correlations, identical GPA
+values, and IQR outliers, require interpretation rather than
+automatic deletion of records.
+
+The dataset should NOT be artificially balanced based only on
+the target distribution.
+
+Next_SGPA is the prediction target and must NOT be included
+as an input feature during model training.
