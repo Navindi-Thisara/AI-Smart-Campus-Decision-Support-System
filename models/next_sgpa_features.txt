@@ -1,0 +1,5 @@
+Previous_SGPA
+Current_SGPA
+Repeated_Courses
+Current_Year
+Current_Semester

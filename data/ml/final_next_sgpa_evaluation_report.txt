@@ -1,0 +1,60 @@
+FINAL NEXT SEMESTER SGPA MODEL EVALUATION
+======================================================================
+
+MODEL
+Neural Network
+Prediction column: Predicted_Next_SGPA_NN
+Actual column: Next_SGPA
+
+Prediction records: 1243
+
+NEURAL NETWORK OVERALL PERFORMANCE
+MAE  : 0.2076
+RMSE : 0.2784
+R2   : 0.6898
+
+RANDOM FOREST PERFORMANCE
+MAE  : 0.2207
+RMSE : 0.2990
+R2   : 0.6422
+
+Best model based on RMSE: Neural Network
+
+NEURAL NETWORK ERROR ANALYSIS
+Mean Error          : 0.0003
+Mean Absolute Error : 0.2076
+Minimum Error       : -1.0559
+Maximum Error       : 1.8271
+
+PREDICTION ACCURACY WITHIN GPA TOLERANCE
+Within +/- 0.10: 404/1243 (32.50%)
+Within +/- 0.20: 758/1243 (60.98%)
+Within +/- 0.30: 959/1243 (77.15%)
+Within +/- 0.50: 1142/1243 (91.87%)
+
+OVER / UNDER PREDICTION
+Over-predicted : 549
+Under-predicted: 694
+Exact          : 0
+
+PERFORMANCE BY GPA RANGE
+Below 2.0: Records=18, MAE=0.6534, RMSE=0.7348
+2.0 - 2.49: Records=54, MAE=0.4033, RMSE=0.5008
+2.5 - 2.99: Records=166, MAE=0.2607, RMSE=0.3270
+3.0 - 3.49: Records=373, MAE=0.2115, RMSE=0.2580
+3.5 - 4.0: Records=632, MAE=0.1620, RMSE=0.2196
+
+ACTUAL VS PREDICTED STATISTICS
+Actual mean      : 3.4061
+Predicted mean   : 3.4064
+Actual median    : 3.5059
+Predicted median : 3.4898
+
+CONCLUSION
+The Neural Network was evaluated using the held-out student-level test set.
+The test set was separated at student level to prevent the same student's records from appearing in both training and testing datasets.
+The final test MAE was 0.2076, RMSE was 0.2784, and R2 was 0.6898.
+The Random Forest baseline achieved an MAE of 0.2207, RMSE of 0.2990, and R2 of 0.6422.
+Based on RMSE, the selected best model was Neural Network.
+Next_SGPA was used as the prediction target and was not used as an input feature.
+The results should be interpreted as predictive performance on the synthetic project dataset and not as official university academic predictions.
