@@ -1,0 +1,306 @@
+.footer {
+  width: 100%;
+  margin-top: auto;
+
+  background: var(--navy-950);
+  color: #ffffff;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.footer-container {
+  width: min(1200px, calc(100% - 48px));
+
+  margin: 0 auto;
+  padding: 42px 0 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 50px;
+}
+
+.footer-brand {
+  flex: 1;
+  min-width: 0;
+}
+
+.footer-brand-link {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 14px;
+
+  color: #ffffff;
+
+  transition:
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.footer-brand-link:hover {
+  opacity: 0.9;
+}
+
+.footer-brand-link:active {
+  transform: scale(0.99);
+}
+
+.footer-logo {
+  width: 46px;
+  height: 46px;
+
+  flex-shrink: 0;
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+}
+
+.footer-logo img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+}
+
+.footer-brand-content {
+  min-width: 0;
+}
+
+.footer-brand-content strong {
+  display: block;
+
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 750;
+
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.footer-brand-content p {
+  max-width: 360px;
+
+  margin: 5px 0 0;
+
+  color: rgba(255, 255, 255, 0.5);
+
+  font-size: 11px;
+  font-weight: 450;
+
+  line-height: 1.6;
+}
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+.footer-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  flex-wrap: wrap;
+
+  gap: 6px;
+}
+
+.footer-nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 38px;
+
+  padding: 0 11px;
+
+  color: rgba(255, 255, 255, 0.58);
+
+  border-radius: var(--radius-md);
+
+  font-size: 11px;
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.footer-nav a:hover {
+  color: #ffffff;
+
+  background: rgba(255, 255, 255, 0.07);
+
+  transform: translateY(-1px);
+}
+
+.footer-nav a:active {
+  transform: translateY(0);
+}
+
+.footer-bottom {
+  width: min(1200px, calc(100% - 48px));
+
+  margin: 0 auto;
+
+  padding: 16px 0 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+  color: rgba(255, 255, 255, 0.35);
+
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.footer-bottom span:last-child {
+  text-align: right;
+}
+
+.footer a:focus-visible {
+  outline: 2px solid var(--gold-light);
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+  .footer-container {
+    align-items: flex-start;
+
+    gap: 30px;
+  }
+
+  .footer-nav {
+    max-width: 380px;
+  }
+
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 650px) {
+
+  .footer-container {
+    width: calc(100% - 32px);
+
+    padding: 32px 0 26px;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 24px;
+  }
+
+  .footer-brand-link {
+    align-items: center;
+  }
+
+  .footer-brand-content p {
+    max-width: 300px;
+  }
+
+  .footer-nav {
+    width: 100%;
+
+    justify-content: flex-start;
+
+    gap: 4px;
+  }
+
+  .footer-nav a {
+    padding: 0 9px;
+  }
+
+  .footer-bottom {
+    width: calc(100% - 32px);
+
+    padding: 15px 0 18px;
+
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 5px;
+  }
+
+  .footer-bottom span:last-child {
+    text-align: left;
+  }
+
+}
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 420px) {
+
+  .footer-container {
+    padding-top: 28px;
+  }
+
+  .footer-logo {
+    width: 42px;
+    height: 42px;
+  }
+
+  .footer-brand-content strong {
+    font-size: 13px;
+  }
+
+  .footer-brand-content p {
+    font-size: 10px;
+  }
+
+  .footer-nav {
+    gap: 2px;
+  }
+
+  .footer-nav a {
+    min-height: 36px;
+
+    padding: 0 7px;
+
+    font-size: 10px;
+  }
+
+}
+
+/* =========================================================
+   DARK MODE
+   ========================================================= */
+
+[data-theme="dark"] .footer {
+  background: #050f22;
+
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .footer,
+  .footer * {
+    transition: none !important;
+  }
+
+}
