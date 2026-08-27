@@ -68,13 +68,13 @@ The system provides both an **eligibility decision and an explanation**.
                              ▼
                  ┌──────────────────────┐
                  │ React + TypeScript   │
-                 │     Frontend        │
+                 │     Frontend         │
                  └──────────┬───────────┘
                             │ REST API
                             ▼
                  ┌──────────────────────┐
-                 │    Spring Boot      │
-                 │      Backend        │
+                 │    Spring Boot       │
+                 │      Backend         │
                  └───────┬───────┬──────┘
                          │       │
                          ▼       ▼
