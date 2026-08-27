@@ -1,8 +1,9 @@
 package com.smartcampus.backend.repository;
 
-import com.smartcampus.backend.dto.UserRole;
 import com.smartcampus.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
@@ -10,9 +11,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByStudentId(String studentId);
 
-    boolean existsByStudentIdAndRole(
-            String studentId,
-            UserRole role
-    );
-
+    Optional<User> findByEmail(String email);
 }

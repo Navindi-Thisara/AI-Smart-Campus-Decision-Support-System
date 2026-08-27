@@ -1,8 +1,11 @@
 package com.smartcampus.backend.service;
 
+import com.smartcampus.backend.dto.LoginRequest;
+import com.smartcampus.backend.dto.LoginResponse;
 import com.smartcampus.backend.dto.RegisterRequest;
 import com.smartcampus.backend.entity.User;
 import com.smartcampus.backend.repository.UserRepository;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +23,7 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    // REGISTER
     public void register(RegisterRequest request) {
 
         String email =
@@ -32,10 +36,8 @@ public class AuthService {
                         .trim()
                         .toUpperCase();
 
-        // =====================================================
-        // PASSWORD CONFIRMATION
-        // =====================================================
 
+        // PASSWORD CONFIRMATION
         if (!request.getPassword()
                 .equals(request.getConfirmPassword())) {
 
@@ -44,11 +46,7 @@ public class AuthService {
             );
         }
 
-
-        // =====================================================
         // EMAIL DUPLICATE CHECK
-        // =====================================================
-
         if (userRepository.existsByEmail(email)) {
 
             throw new IllegalArgumentException(
@@ -56,11 +54,7 @@ public class AuthService {
             );
         }
 
-
-        // =====================================================
         // ID DUPLICATE CHECK
-        // =====================================================
-
         if (userRepository.existsByStudentId(studentId)) {
 
             String idType =
@@ -71,25 +65,18 @@ public class AuthService {
             throw new IllegalArgumentException(
                     "An account with this "
                             + idType
-                            + " ID already exists."
+                            + " already exists."
             );
         }
 
-
-        // =====================================================
         // PASSWORD ENCODING
-        // =====================================================
-
         String encodedPassword =
                 passwordEncoder.encode(
                         request.getPassword()
                 );
 
 
-        // =====================================================
         // CREATE USER
-        // =====================================================
-
         User user = new User(
                 request.getFullName().trim(),
                 email,
@@ -99,10 +86,54 @@ public class AuthService {
         );
 
 
-        // =====================================================
         // SAVE USER
-        // =====================================================
-
         userRepository.save(user);
+    }
+
+
+    // LOGIN
+    public LoginResponse login(LoginRequest request) {
+
+        String email =
+                request.getEmail()
+                        .trim()
+                        .toLowerCase();
+
+
+        // FIND USER
+        User user =
+                userRepository
+                        .findByEmail(email)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Invalid email or password."
+                                )
+                        );
+
+
+        // CHECK PASSWORD
+        boolean passwordMatches =
+                passwordEncoder.matches(
+                        request.getPassword(),
+                        user.getPassword()
+                );
+
+
+        if (!passwordMatches) {
+
+            throw new IllegalArgumentException(
+                    "Invalid email or password."
+            );
+        }
+
+        // RETURN USER INFORMATION
+        LoginResponse.UserResponse userResponse =
+                new LoginResponse.UserResponse(user);
+
+
+        return new LoginResponse(
+                "Login successful.",
+                userResponse
+        );
     }
 }
