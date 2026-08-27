@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+smartcampus-ai/
+__pycache__/
+*.pyc
