@@ -1,0 +1,3144 @@
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
+
+import {
+  Link,
+} from 'react-router-dom'
+
+import './StudentDashboard.css'
+
+/* =========================================================
+   TYPES
+   ========================================================= */
+
+interface StoredUser {
+  id: number
+  fullName: string
+  email: string
+  studentId: string
+  role: 'STUDENT' | 'STAFF'
+}
+
+interface Faculty {
+  facultyId: string
+  facultyName: string
+}
+
+interface Degree {
+  degreeId: string
+  degreeName: string
+  facultyId: string
+  facultyName?: string
+  department: string
+  durationYears: number
+}
+
+interface CourseModule {
+  courseCode: string
+  moduleName: string
+  year: number
+  semester: number
+  credits: number
+  moduleCategory: 'GPA' | 'NON_GPA'
+  moduleType?: 'Core' | 'Elective'
+}
+
+interface StudentProfile {
+  studentId: string
+  intake: number | null
+  facultyId: string | null
+  degreeId: string | null
+  currentYear: number | null
+  currentSemester: number | null
+}
+
+interface GradeEntry {
+  courseCode: string
+  grade: string
+  gradePoint: number | null
+}
+
+interface SemesterRecord {
+  semester: number
+  sgpa: number
+  credits?: number
+}
+
+interface DashboardData {
+  profile: StudentProfile | null
+  semesterRecords: SemesterRecord[]
+  grades: Record<number, GradeEntry[]>
+}
+
+/* =========================================================
+   CONSTANTS
+   ========================================================= */
+
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+
+const GRADE_OPTIONS = [
+  { grade: 'A+', point: 4.0 },
+  { grade: 'A', point: 4.0 },
+  { grade: 'A-', point: 3.7 },
+  { grade: 'B+', point: 3.3 },
+  { grade: 'B', point: 3.0 },
+  { grade: 'B-', point: 2.7 },
+  { grade: 'C+', point: 2.3 },
+  { grade: 'C', point: 2.0 },
+  { grade: 'C-', point: 1.7 },
+  { grade: 'D+', point: 1.3 },
+  { grade: 'D', point: 1.0 },
+  { grade: 'F', point: 0.0 },
+  { grade: 'N/A', point: null },
+]
+
+const INTAKES = [39, 40, 41, 42]
+
+const YEARS = [1, 2, 3, 4]
+
+const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8]
+
+/*
+ * Semester-to-year relationship:
+ *
+ * Year 1 -> Semester 1, 2
+ * Year 2 -> Semester 3, 4
+ * Year 3 -> Semester 5, 6
+ * Year 4 -> Semester 7, 8
+ *
+ * This follows the academic structure in the supplied dataset.
+ */
+
+const semesterBelongsToYear = (
+  semester: number,
+  year: number,
+) => {
+  return Math.ceil(semester / 2) === year
+}
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+function getGradePoint(grade: string): number | null {
+  const option = GRADE_OPTIONS.find(
+    item => item.grade === grade,
+  )
+
+  return option?.point ?? null
+}
+
+function getInitials(name: string): string {
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+
+  if (parts.length === 0) {
+    return 'ST'
+  }
+
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase()
+  }
+
+  return (
+    parts[0].charAt(0) +
+    parts[parts.length - 1].charAt(0)
+  ).toUpperCase()
+}
+
+function formatGPA(value: number | null | undefined) {
+  if (
+    value === null ||
+    value === undefined ||
+    Number.isNaN(value)
+  ) {
+    return '—'
+  }
+
+  return value.toFixed(4)
+}
+
+async function apiRequest<T>(
+  path: string,
+  options?: RequestInit,
+): Promise<T> {
+  const response = await fetch(
+    `${API_BASE}${path}`,
+    {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options?.headers || {}),
+      },
+    },
+  )
+
+  if (!response.ok) {
+    let message = `Request failed (${response.status})`
+
+    try {
+      const errorBody = await response.json()
+
+      message =
+        errorBody.message ||
+        errorBody.error ||
+        message
+    } catch {
+      // Keep default error.
+    }
+
+    throw new Error(message)
+  }
+
+  if (response.status === 204) {
+    return undefined as T
+  }
+
+  return response.json()
+}
+
+
+type UnknownRecord = Record<string, unknown>
+
+function getArrayPayload(value: unknown): unknown[] {
+  if (Array.isArray(value)) {
+    return value
+  }
+
+  if (
+    value &&
+    typeof value === 'object'
+  ) {
+    const record = value as UnknownRecord
+
+    const candidates = [
+      record.data,
+      record.content,
+      record.items,
+      record.results,
+      record.faculties,
+      record.degrees,
+    ]
+
+    const found = candidates.find(
+      candidate => Array.isArray(candidate),
+    )
+
+    if (Array.isArray(found)) {
+      return found
+    }
+  }
+
+  return []
+}
+
+function normalizeFacultyList(
+  payload: unknown,
+): Faculty[] {
+  const seen = new Set<string>()
+
+  return getArrayPayload(payload)
+    .map(item => {
+      if (
+        !item ||
+        typeof item !== 'object'
+      ) {
+        return null
+      }
+
+      const record = item as UnknownRecord
+
+      const rawId =
+        record.facultyId ??
+        record.facultyID ??
+        record.faculty_id ??
+        record.id ??
+        record.code
+
+      const rawName =
+        record.facultyName ??
+        record.faculty_name ??
+        record.name ??
+        record.title
+
+      const facultyId =
+        rawId === null ||
+        rawId === undefined
+          ? ''
+          : String(rawId).trim()
+
+      const facultyName =
+        rawName === null ||
+        rawName === undefined
+          ? ''
+          : String(rawName).trim()
+
+      if (
+        !facultyId ||
+        !facultyName ||
+        seen.has(facultyId)
+      ) {
+        return null
+      }
+
+      seen.add(facultyId)
+
+      return {
+        facultyId,
+        facultyName,
+      }
+    })
+    .filter(
+      (faculty): faculty is Faculty =>
+        faculty !== null,
+    )
+}
+
+function normalizeDegreeList(
+  payload: unknown,
+): Degree[] {
+  return getArrayPayload(payload)
+    .map(item => {
+      if (
+        !item ||
+        typeof item !== 'object'
+      ) {
+        return null
+      }
+
+      const record = item as UnknownRecord
+
+      const rawDegreeId =
+        record.degreeId ??
+        record.degreeID ??
+        record.degree_id ??
+        record.id ??
+        record.code
+
+      const rawFacultyId =
+        record.facultyId ??
+        record.facultyID ??
+        record.faculty_id ??
+        (
+          record.faculty &&
+          typeof record.faculty === 'object'
+            ? (
+                record.faculty as UnknownRecord
+              ).facultyId ??
+              (
+                record.faculty as UnknownRecord
+              ).id
+            : undefined
+        )
+
+      const rawDegreeName =
+        record.degreeName ??
+        record.degree_name ??
+        record.name ??
+        record.title
+
+      const degreeId =
+        rawDegreeId === null ||
+        rawDegreeId === undefined
+          ? ''
+          : String(rawDegreeId).trim()
+
+      const facultyId =
+        rawFacultyId === null ||
+        rawFacultyId === undefined
+          ? ''
+          : String(rawFacultyId).trim()
+
+      const degreeName =
+        rawDegreeName === null ||
+        rawDegreeName === undefined
+          ? ''
+          : String(rawDegreeName).trim()
+
+      if (
+        !degreeId ||
+        !degreeName
+      ) {
+        return null
+      }
+
+      const rawFacultyName =
+        record.facultyName ??
+        record.faculty_name ??
+        (
+          record.faculty &&
+          typeof record.faculty === 'object'
+            ? (
+                record.faculty as UnknownRecord
+              ).facultyName ??
+              (
+                record.faculty as UnknownRecord
+              ).name
+            : undefined
+        )
+
+      return {
+        degreeId,
+        degreeName,
+        facultyId,
+        facultyName:
+          rawFacultyName === null ||
+          rawFacultyName === undefined
+            ? undefined
+            : String(
+                rawFacultyName,
+              ).trim(),
+        department: String(
+          record.department ?? '',
+        ),
+        durationYears: Number(
+          record.durationYears ??
+          record.duration_years ??
+          record.duration ??
+          0,
+        ),
+      }
+    })
+    .filter(
+      (degree): degree is Degree =>
+        degree !== null,
+    )
+}
+
+function facultiesFromDegrees(
+  degreeList: Degree[],
+): Faculty[] {
+  const facultyIds = Array.from(
+    new Set(
+      degreeList
+        .map(degree =>
+          String(
+            degree.facultyId || '',
+          ).trim(),
+        )
+        .filter(Boolean),
+    ),
+  )
+
+  return facultyIds.map(id => {
+    const matchingDegree =
+      degreeList.find(
+        degree =>
+          String(degree.facultyId) === id,
+      )
+
+    return {
+      facultyId: id,
+      facultyName:
+        matchingDegree?.facultyName ||
+        id,
+    }
+  })
+}
+
+
+function normalizeSemesterRecords(value: unknown): SemesterRecord[] {
+  let items: unknown[] = []
+
+  if (Array.isArray(value)) {
+    items = value
+  } else if (value && typeof value === 'object') {
+    const record = value as UnknownRecord
+    const arrayValue = getArrayPayload(value)
+
+    if (arrayValue.length > 0) {
+      items = arrayValue
+    } else {
+      // Also support APIs that return SGPA as an object map:
+      // { "1": 3.42, "2": 3.61, ... }
+      items = Object.entries(record).map(([semester, sgpa]) => ({
+        semester,
+        sgpa,
+      }))
+    }
+  }
+
+  return items
+    .map(item => {
+      if (!item || typeof item !== 'object') return null
+
+      const record = item as UnknownRecord
+      const semesterRaw =
+        record.semester ??
+        record.semesterNumber ??
+        record.semester_no ??
+        record.Semester ??
+        record.sem
+      const sgpaRaw =
+        record.sgpa ??
+        record.SGPA ??
+        record.sgpaValue ??
+        record.gpa ??
+        record.GPA
+
+      const semester = Number(semesterRaw)
+      const sgpa = Number(sgpaRaw)
+
+      if (!Number.isInteger(semester) || !SEMESTERS.includes(semester)) {
+        return null
+      }
+
+      if (!Number.isFinite(sgpa) || sgpa < 0 || sgpa > 4) {
+        return null
+      }
+
+      return {
+        semester,
+        sgpa: Number(sgpa.toFixed(4)),
+        credits:
+          record.credits == null
+            ? undefined
+            : Number(record.credits),
+      }
+    })
+    .filter(
+      (record): record is SemesterRecord => record !== null,
+    )
+    .sort((a, b) => a.semester - b.semester)
+}
+
+function normalizeGradeMap(value: unknown): Record<number, GradeEntry[]> {
+  if (!value || typeof value !== 'object') return {}
+
+  const source = value as UnknownRecord
+  const result: Record<number, GradeEntry[]> = {}
+
+  Object.entries(source).forEach(([key, rawEntries]) => {
+    const semester = Number(key)
+    if (!SEMESTERS.includes(semester)) return
+
+    const entries = getArrayPayload(rawEntries)
+      .map(item => {
+        if (!item || typeof item !== 'object') return null
+        const record = item as UnknownRecord
+        const courseCode = String(
+          record.courseCode ??
+          record.course_code ??
+          record.Course_Code ??
+          '',
+        ).trim()
+        const grade = String(
+          record.grade ??
+          record.Grade ??
+          '',
+        ).trim()
+        if (!courseCode) return null
+
+        const rawPoint = record.gradePoint ?? record.grade_point
+        const parsedPoint = rawPoint == null ? null : Number(rawPoint)
+
+        return {
+          courseCode,
+          grade,
+          gradePoint:
+            Number.isFinite(parsedPoint)
+              ? parsedPoint
+              : getGradePoint(grade),
+        }
+      })
+      .filter((entry): entry is GradeEntry => entry !== null)
+
+    result[semester] = entries
+  })
+
+  return result
+}
+
+function normalizeDashboardData(payload: unknown): DashboardData {
+  const record =
+    payload && typeof payload === 'object'
+      ? (payload as UnknownRecord)
+      : {}
+
+  const rawRecords =
+    record.semesterRecords ??
+    record.semesterGpas ??
+    record.semesterGPAs ??
+    record.sgpAs ??
+    record.sgpaRecords ??
+    record.gpaRecords ??
+    []
+
+  const rawGrades =
+    record.grades ??
+    record.results ??
+    record.semesterGrades ??
+    {}
+
+  return {
+    profile:
+      (record.profile as StudentProfile | null | undefined) ?? null,
+    semesterRecords: normalizeSemesterRecords(rawRecords),
+    grades: normalizeGradeMap(rawGrades),
+  }
+}
+
+/* =========================================================
+   ICON
+   ========================================================= */
+
+function Icon({
+  name,
+}: {
+  name:
+    | 'book'
+    | 'chart'
+    | 'brain'
+    | 'spark'
+    | 'shield'
+    | 'save'
+    | 'edit'
+    | 'arrow'
+    | 'check'
+    | 'info'
+    | 'user'
+    | 'graduation'
+    | 'calendar'
+    | 'refresh'
+}) {
+  const paths: Record<string, React.ReactNode> = {
+    book: (
+      <>
+        <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" />
+        <path d="M4 5.5v15A2.5 2.5 0 0 1 6.5 18H20" />
+      </>
+    ),
+
+    chart: (
+      <>
+        <path d="M4 19V5" />
+        <path d="M4 19h16" />
+        <path d="m7 15 3-4 3 2 5-7" />
+      </>
+    ),
+
+    brain: (
+      <>
+        <path d="M9.5 4.5a3.5 3.5 0 0 0-6 2.5 3.5 3.5 0 0 0 0 5.5A3.5 3.5 0 0 0 6 18a3.5 3.5 0 0 0 6 1.5" />
+        <path d="M14.5 4.5a3.5 3.5 0 0 1 6 2.5 3.5 3.5 0 0 1 0 5.5A3.5 3.5 0 0 1 18 18a3.5 3.5 0 0 1-6 1.5" />
+        <path d="M12 3v18M8 8h4M8 13h4M12 10h4M12 16h4" />
+      </>
+    ),
+
+    spark: (
+      <>
+        <path d="m12 2 1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" />
+        <path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" />
+      </>
+    ),
+
+    shield: (
+      <>
+        <path d="M12 3 20 6v5c0 5-3.2 8.5-8 10-4.8-1.5-8-5-8-10V6z" />
+        <path d="m8.5 12 2.2 2.2 4.8-5" />
+      </>
+    ),
+
+    save: (
+      <>
+        <path d="M5 3h11l3 3v15H5z" />
+        <path d="M8 3v6h8V3M8 21v-7h8v7" />
+      </>
+    ),
+
+    edit: (
+      <>
+        <path d="M4 20h4L19 9l-4-4L4 16z" />
+        <path d="m13.5 6.5 4 4" />
+      </>
+    ),
+
+    arrow: (
+      <>
+        <path d="M5 12h14" />
+        <path d="m13 6 6 6-6 6" />
+      </>
+    ),
+
+    check: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="m8 12 2.5 2.5L16 9" />
+      </>
+    ),
+
+    info: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 10v6M12 7.5v.2" />
+      </>
+    ),
+
+    user: (
+      <>
+        <circle cx="12" cy="8" r="3.5" />
+        <path d="M5 21a7 7 0 0 1 14 0" />
+      </>
+    ),
+
+    graduation: (
+      <>
+        <path d="m3 9 9-5 9 5-9 5z" />
+        <path d="M7 11v5c2.5 2 5 3 10 0v-5" />
+        <path d="M21 10v5" />
+      </>
+    ),
+
+    calendar: (
+      <>
+        <rect x="4" y="5" width="16" height="16" rx="2" />
+        <path d="M8 3v4M16 3v4M4 10h16" />
+      </>
+    ),
+
+    refresh: (
+      <>
+        <path d="M20 11a8 8 0 0 0-14.7-4L4 9" />
+        <path d="M4 4v5h5" />
+        <path d="M4 13a8 8 0 0 0 14.7 4L20 15" />
+        <path d="M20 20v-5h-5" />
+      </>
+    ),
+  }
+
+  return (
+    <svg
+      className="sd-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {paths[name]}
+    </svg>
+  )
+}
+
+/* =========================================================
+   COMPONENT
+   ========================================================= */
+
+function StudentDashboard() {
+  /* -------------------------------------------------------
+     USER
+     ------------------------------------------------------- */
+
+  const [user, setUser] =
+    useState<StoredUser | null>(null)
+
+  /* -------------------------------------------------------
+     REFERENCE DATA
+     ------------------------------------------------------- */
+
+  const [faculties, setFaculties] =
+    useState<Faculty[]>([])
+
+  const [degrees, setDegrees] =
+    useState<Degree[]>([])
+
+  const [
+    loadingReferenceData,
+    setLoadingReferenceData,
+  ] = useState(true)
+
+  const [
+    referenceError,
+    setReferenceError,
+  ] = useState('')
+
+  /* -------------------------------------------------------
+     PROFILE
+     ------------------------------------------------------- */
+
+  const [profile, setProfile] =
+    useState<StudentProfile | null>(null)
+
+  const [intake, setIntake] =
+    useState<number | ''>('')
+
+  const [facultyId, setFacultyId] =
+    useState('')
+
+  const [degreeId, setDegreeId] =
+    useState('')
+
+  const [currentYear, setCurrentYear] =
+    useState<number | ''>('')
+
+  const [currentSemester, setCurrentSemester] =
+    useState<number | ''>('')
+
+  /* -------------------------------------------------------
+     MODULES
+     ------------------------------------------------------- */
+
+  // Keep modules for every semester instead of replacing the current
+  // semester's modules whenever the student clicks another semester.
+  const [modulesBySemester, setModulesBySemester] =
+    useState<Record<number, CourseModule[]>>({})
+
+  const [loadingModules, setLoadingModules] =
+    useState(false)
+
+  /* -------------------------------------------------------
+     GRADES
+     ------------------------------------------------------- */
+
+  const [grades, setGrades] =
+    useState<Record<number, GradeEntry[]>>({})
+
+  const [selectedGradeSemester, setSelectedGradeSemester] =
+    useState<number>(1)
+
+  /* -------------------------------------------------------
+     SGPA
+     ------------------------------------------------------- */
+
+  const [sgpaValues, setSgpaValues] =
+    useState<Record<number, string>>({})
+
+  const [semesterRecords, setSemesterRecords] =
+    useState<SemesterRecord[]>([])
+
+  /* -------------------------------------------------------
+     UI
+     ------------------------------------------------------- */
+
+  const [loading, setLoading] =
+    useState(true)
+
+  const [savingProfile, setSavingProfile] =
+    useState(false)
+
+  const [savingGrades, setSavingGrades] =
+    useState(false)
+
+  const [savingSGPA, setSavingSGPA] =
+    useState(false)
+
+  const [profileOpen, setProfileOpen] =
+    useState(false)
+
+  const [message, setMessage] =
+    useState('')
+
+  const [error, setError] =
+    useState('')
+
+  /* =======================================================
+     LOAD USER
+     ======================================================= */
+
+  useEffect(() => {
+    const storedUser =
+      localStorage.getItem('user')
+
+    if (!storedUser) {
+      setLoading(false)
+      return
+    }
+
+    try {
+      setUser(JSON.parse(storedUser))
+    } catch {
+      setUser(null)
+    }
+  }, [])
+
+  const studentId = user?.studentId || ''
+
+  /* =======================================================
+     LOAD REFERENCE DATA
+     ======================================================= */
+
+  const loadReferenceData = useCallback(
+    async () => {
+      setLoadingReferenceData(true)
+      setReferenceError('')
+
+      /*
+       * Load faculties and degrees independently.
+       *
+       * The previous Promise.all implementation meant that
+       * if either request failed, BOTH lists were discarded.
+       * That is why the Faculty dropdown could remain with
+       * only the "Select faculty" placeholder.
+       */
+      const [
+        facultyResult,
+        degreeResult,
+      ] = await Promise.allSettled([
+        apiRequest<unknown>(
+          '/api/reference/faculties',
+        ),
+        apiRequest<unknown>(
+          '/api/reference/degrees',
+        ),
+      ])
+
+      let nextFaculties: Faculty[] = []
+      let nextDegrees: Degree[] = []
+
+      if (
+        degreeResult.status ===
+        'fulfilled'
+      ) {
+        nextDegrees =
+          normalizeDegreeList(
+            degreeResult.value,
+          )
+
+        setDegrees(nextDegrees)
+      } else {
+        setDegrees([])
+      }
+
+      if (
+        facultyResult.status ===
+        'fulfilled'
+      ) {
+        nextFaculties =
+          normalizeFacultyList(
+            facultyResult.value,
+          )
+      }
+
+      /*
+       * Fallback:
+       * If the faculty endpoint is unavailable but the
+       * degree response contains faculty IDs, still build
+       * a usable faculty dropdown instead of leaving it empty.
+       */
+      if (
+        nextFaculties.length === 0 &&
+        nextDegrees.length > 0
+      ) {
+        nextFaculties =
+          facultiesFromDegrees(
+            nextDegrees,
+          )
+      }
+
+      setFaculties(nextFaculties)
+
+      const errors: string[] = []
+
+      if (
+        facultyResult.status ===
+        'rejected'
+      ) {
+        errors.push(
+          facultyResult.reason instanceof Error
+            ? `Faculty request: ${facultyResult.reason.message}`
+            : 'Faculty request failed.',
+        )
+      }
+
+      if (
+        degreeResult.status ===
+        'rejected'
+      ) {
+        errors.push(
+          degreeResult.reason instanceof Error
+            ? `Degree request: ${degreeResult.reason.message}`
+            : 'Degree request failed.',
+        )
+      }
+
+      if (
+        nextFaculties.length === 0
+      ) {
+        errors.push(
+          'No faculty records were returned by the reference API.',
+        )
+      }
+
+      if (errors.length > 0) {
+        setReferenceError(
+          errors.join(' '),
+        )
+      }
+
+      setLoadingReferenceData(false)
+    },
+    [],
+  )
+
+  useEffect(() => {
+    loadReferenceData()
+  }, [loadReferenceData])
+
+  /* =======================================================
+     LOAD STUDENT DASHBOARD
+     ======================================================= */
+
+  const loadDashboard = useCallback(
+    async () => {
+      if (!studentId) {
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+      setError('')
+
+      try {
+        const rawData =
+          await apiRequest<unknown>(
+            `/api/students/${encodeURIComponent(studentId)}/dashboard`,
+          )
+
+        const data = normalizeDashboardData(rawData)
+
+        const loadedProfile =
+          data.profile
+
+        setProfile(loadedProfile)
+
+        if (loadedProfile) {
+          setIntake(
+            loadedProfile.intake ?? '',
+          )
+
+          setFacultyId(
+            loadedProfile.facultyId ?? '',
+          )
+
+          setDegreeId(
+            loadedProfile.degreeId ?? '',
+          )
+
+          setCurrentYear(
+            loadedProfile.currentYear ?? '',
+          )
+
+          setCurrentSemester(
+            loadedProfile.currentSemester ?? '',
+          )
+        }
+
+        setSemesterRecords(
+          data.semesterRecords || [],
+        )
+
+        const loadedGrades =
+          data.grades || {}
+
+        setGrades(loadedGrades)
+
+        const sgpaMap: Record<number, string> = {}
+
+        ;(data.semesterRecords || [])
+          .forEach(record => {
+            sgpaMap[record.semester] =
+              String(record.sgpa)
+          })
+
+        setSgpaValues(sgpaMap)
+
+        /*
+         * First semester with existing grades,
+         * otherwise the selected/current semester.
+         */
+        const semestersWithGrades =
+          Object.keys(loadedGrades)
+            .map(Number)
+            .filter(
+              semester =>
+                loadedGrades[semester]?.length > 0,
+            )
+            .sort((a, b) => a - b)
+
+        if (semestersWithGrades.length > 0) {
+          setSelectedGradeSemester(
+            semestersWithGrades[
+              semestersWithGrades.length - 1
+            ],
+          )
+        } else if (
+          loadedProfile?.currentSemester
+        ) {
+          setSelectedGradeSemester(
+            loadedProfile.currentSemester,
+          )
+        }
+      } catch (err) {
+        /*
+         * A 404 simply means that the student has
+         * not completed their academic profile yet.
+         */
+        setProfile(null)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [studentId],
+  )
+
+  useEffect(() => {
+    loadDashboard()
+  }, [loadDashboard])
+
+  /* =======================================================
+     FILTER DEGREES BY FACULTY
+     ======================================================= */
+
+  const filteredDegrees = useMemo(
+    () => {
+      if (!facultyId) {
+        return degrees
+      }
+
+      return degrees.filter(
+        degree =>
+          String(degree.facultyId) ===
+          String(facultyId),
+      )
+    },
+    [degrees, facultyId],
+  )
+
+  /* =======================================================
+     CURRENT FACULTY / DEGREE
+     ======================================================= */
+
+  const selectedFaculty = useMemo(
+    () =>
+      faculties.find(
+        faculty =>
+          String(faculty.facultyId) ===
+          String(facultyId),
+      ),
+    [faculties, facultyId],
+  )
+
+  const selectedDegree = useMemo(
+    () =>
+      degrees.find(
+        degree =>
+          String(degree.degreeId) ===
+          String(degreeId),
+      ),
+    [degrees, degreeId],
+  )
+
+  /* =======================================================
+     PROFILE VALIDATION
+     ======================================================= */
+
+  const profileComplete =
+    Boolean(
+      studentId &&
+      intake &&
+      facultyId &&
+      degreeId &&
+      currentYear &&
+      currentSemester,
+    )
+
+  /* =======================================================
+     LOAD MODULES
+     ======================================================= */
+
+  const loadModules = useCallback(
+    async (
+      selectedDegreeId: string,
+      semester: number,
+    ) => {
+      if (!selectedDegreeId || !SEMESTERS.includes(semester)) {
+        return []
+      }
+
+      // Do not refetch a semester that is already cached.
+      const cached = modulesBySemester[semester]
+      if (cached) {
+        return cached
+      }
+
+      setLoadingModules(true)
+      setError('')
+
+      try {
+        const moduleData =
+          await apiRequest<CourseModule[]>(
+            `/api/reference/degrees/${encodeURIComponent(
+              selectedDegreeId,
+            )}/semesters/${semester}/modules`,
+          )
+
+        const normalizedModules = Array.isArray(moduleData)
+          ? moduleData
+          : []
+
+        setModulesBySemester(previous => ({
+          ...previous,
+          [semester]: normalizedModules,
+        }))
+
+        return normalizedModules
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : `Unable to load modules for Semester ${semester}.`,
+        )
+        return []
+      } finally {
+        setLoadingModules(false)
+      }
+    },
+    [modulesBySemester],
+  )
+
+  // Load every semester's modules once the degree is known. This makes all
+  // S1-S8 tabs available even when the student is currently in S3-S8.
+  useEffect(() => {
+    if (!degreeId) return
+
+    let cancelled = false
+
+    const loadAllSemesterModules = async () => {
+      setLoadingModules(true)
+      setError('')
+
+      const results = await Promise.all(
+        SEMESTERS.map(async semester => {
+          try {
+            const data = await apiRequest<CourseModule[]>(
+              `/api/reference/degrees/${encodeURIComponent(
+                degreeId,
+              )}/semesters/${semester}/modules`,
+            )
+            return [semester, Array.isArray(data) ? data : []] as const
+          } catch {
+            // One missing/empty semester must not prevent other semesters
+            // from appearing.
+            return [semester, []] as const
+          }
+        }),
+      )
+
+      if (!cancelled) {
+        setModulesBySemester(
+          Object.fromEntries(results),
+        )
+        setLoadingModules(false)
+      }
+    }
+
+    loadAllSemesterModules()
+
+    return () => {
+      cancelled = true
+    }
+  }, [degreeId])
+
+  /* =======================================================
+     PROFILE FIELD HANDLERS
+     =======================================================
+
+     ======================================================= */
+
+  const handleFacultyChange = (
+    value: string,
+  ) => {
+    setFacultyId(value)
+
+    /*
+     * Degree must always belong to selected faculty.
+     */
+    setDegreeId('')
+    setModulesBySemester({})
+  }
+
+  const handleYearChange = (
+    value: string,
+  ) => {
+    const year = value
+      ? Number(value)
+      : ''
+
+    setCurrentYear(year)
+
+    /*
+     * Only semesters belonging to this year
+     * should be selectable.
+     */
+    if (
+      typeof year === 'number' &&
+      currentSemester &&
+      !semesterBelongsToYear(
+        Number(currentSemester),
+        year,
+      )
+    ) {
+      setCurrentSemester('')
+      setModulesBySemester({})
+    }
+  }
+
+  const availableSemesters =
+    typeof currentYear === 'number'
+      ? SEMESTERS.filter(
+          semester =>
+            semesterBelongsToYear(
+              semester,
+              currentYear,
+            ),
+        )
+      : []
+
+  const handleSemesterChange = (
+    value: string,
+  ) => {
+    const semester = value
+      ? Number(value)
+      : ''
+
+    setCurrentSemester(
+      semester,
+    )
+
+    if (
+      semester &&
+      degreeId
+    ) {
+      loadModules(
+        degreeId,
+        Number(semester),
+      )
+    }
+  }
+
+  /* =======================================================
+     SAVE PROFILE
+     ======================================================= */
+
+  const handleSaveProfile = async (
+    event: FormEvent,
+  ) => {
+    event.preventDefault()
+
+    setError('')
+    setMessage('')
+
+    if (!profileComplete) {
+      setError(
+        'Please complete Faculty, Degree, Intake, Year and Semester.',
+      )
+      return
+    }
+
+    setSavingProfile(true)
+
+    try {
+      const savedProfile =
+        await apiRequest<StudentProfile>(
+          `/api/students/${encodeURIComponent(studentId)}/profile`,
+          {
+            method: 'PUT',
+            body: JSON.stringify({
+              studentId,
+              intake: Number(intake),
+              facultyId,
+              degreeId,
+              currentYear: Number(
+                currentYear,
+              ),
+              currentSemester: Number(
+                currentSemester,
+              ),
+            }),
+          },
+        )
+
+      setProfile(savedProfile)
+
+      setMessage(
+        'Academic profile saved successfully.',
+      )
+
+      await loadModules(
+        degreeId,
+        Number(currentSemester),
+      )
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to save academic profile.',
+      )
+    } finally {
+      setSavingProfile(false)
+    }
+  }
+
+  /* =======================================================
+     GET MODULES FOR SELECTED GRADE SEMESTER
+     ======================================================= */
+
+  const selectedSemesterModules = useMemo(
+    () => {
+      if (!degreeId || !selectedGradeSemester) {
+        return []
+      }
+
+      return modulesBySemester[selectedGradeSemester] || []
+    },
+    [degreeId, selectedGradeSemester, modulesBySemester],
+  )
+
+  /* =======================================================
+     LOAD ANOTHER SEMESTER FOR GRADES
+     ======================================================= */
+
+  const handleGradeSemesterChange = async (
+    semester: number,
+  ) => {
+    setSelectedGradeSemester(semester)
+    await loadModules(degreeId, semester)
+  }
+
+  /* =======================================================
+     GRADE UPDATE
+     ======================================================= */
+
+  const updateGrade = (
+    semester: number,
+    courseCode: string,
+    grade: string,
+  ) => {
+    setGrades(previous => {
+      const semesterGrades =
+        [
+          ...(previous[semester] || []),
+        ]
+
+      const existingIndex =
+        semesterGrades.findIndex(
+          entry =>
+            entry.courseCode ===
+            courseCode,
+        )
+
+      const nextEntry: GradeEntry = {
+        courseCode,
+        grade,
+        gradePoint:
+          getGradePoint(grade),
+      }
+
+      if (
+        existingIndex >= 0
+      ) {
+        semesterGrades[
+          existingIndex
+        ] = nextEntry
+      } else {
+        semesterGrades.push(
+          nextEntry,
+        )
+      }
+
+      return {
+        ...previous,
+        [semester]:
+          semesterGrades,
+      }
+    })
+  }
+
+  const getGradeForCourse = (
+    semester: number,
+    courseCode: string,
+  ) => {
+    return (
+      grades[semester]
+        ?.find(
+          entry =>
+            entry.courseCode ===
+            courseCode,
+        )?.grade || ''
+    )
+  }
+
+  /* =======================================================
+     SAVE GRADES
+     ======================================================= */
+
+  const handleSaveGrades = async () => {
+    if (
+      !studentId ||
+      !degreeId ||
+      !selectedGradeSemester
+    ) {
+      setError(
+        'Please complete your academic profile first.',
+      )
+      return
+    }
+
+    const semesterGrades =
+      grades[selectedGradeSemester] ||
+      []
+
+    if (
+      semesterGrades.length === 0
+    ) {
+      setError(
+        'Please enter at least one module grade.',
+      )
+      return
+    }
+
+    setSavingGrades(true)
+    setError('')
+    setMessage('')
+
+    try {
+      await apiRequest(
+        `/api/students/${encodeURIComponent(
+          studentId,
+        )}/results`,
+        {
+          method: 'PUT',
+          body: JSON.stringify({
+            studentId,
+            degreeId,
+            semester:
+              selectedGradeSemester,
+            grades:
+              semesterGrades,
+          }),
+        },
+      )
+
+      setMessage(
+        `Semester ${selectedGradeSemester} grades saved successfully.`,
+      )
+
+      await loadDashboard()
+      setSelectedGradeSemester(selectedGradeSemester)
+      await loadModules(degreeId, selectedGradeSemester)
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to save grades.',
+      )
+    } finally {
+      setSavingGrades(false)
+    }
+  }
+
+  /* =======================================================
+     SGPA UPDATE
+     ======================================================= */
+
+  const handleSGPAChange = (
+    semester: number,
+    value: string,
+  ) => {
+    setSgpaValues(previous => ({
+      ...previous,
+      [semester]: value,
+    }))
+  }
+
+  /* =======================================================
+     SAVE SGPA
+     ======================================================= */
+
+  const handleSaveSGPA = async (
+    semester: number,
+  ) => {
+    const rawValue =
+      sgpaValues[semester]
+
+    if (!rawValue) {
+      setError(
+        `Please enter an SGPA for Semester ${semester}.`,
+      )
+      return
+    }
+
+    const sgpa =
+      Number(rawValue)
+
+    if (
+      Number.isNaN(sgpa) ||
+      sgpa < 0 ||
+      sgpa > 4
+    ) {
+      setError(
+        'SGPA must be between 0.0000 and 4.0000.',
+      )
+      return
+    }
+
+    setSavingSGPA(true)
+    setError('')
+    setMessage('')
+
+    try {
+      await apiRequest(
+        `/api/students/${encodeURIComponent(
+          studentId,
+        )}/sgpa`,
+        {
+          method: 'PUT',
+          body: JSON.stringify({
+            studentId,
+            semester,
+            sgpa: Number(
+              sgpa.toFixed(4),
+            ),
+          }),
+        },
+      )
+
+      setMessage(
+        `Semester ${semester} SGPA saved successfully.`,
+      )
+
+      await loadDashboard()
+      setSelectedGradeSemester(semester)
+      await loadModules(degreeId, semester)
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to save SGPA.',
+      )
+    } finally {
+      setSavingSGPA(false)
+    }
+  }
+
+  /* =======================================================
+     GPA CALCULATIONS
+     ======================================================= */
+
+  const currentSGPA = useMemo(() => {
+    if (semesterRecords.length === 0) {
+      return null
+    }
+
+    // "Current SGPA" means the latest semester for which an SGPA was saved,
+    // not necessarily the student's current academic semester.
+    const latestRecord = [...semesterRecords]
+      .filter(record => Number.isFinite(Number(record.sgpa)))
+      .sort((a, b) => a.semester - b.semester)
+      .at(-1)
+
+    return latestRecord?.sgpa ?? null
+  }, [semesterRecords])
+
+  const overallFGPA = useMemo(() => {
+    const values = semesterRecords
+      .map(record => Number(record.sgpa))
+      .filter(value => Number.isFinite(value) && value >= 0 && value <= 4)
+
+    if (values.length === 0) {
+      return null
+    }
+
+    return Number(
+      (values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(4),
+    )
+  }, [semesterRecords])
+
+  const completedSemesterCount = useMemo(() => {
+    return new Set(
+      semesterRecords
+        .filter(record => Number.isFinite(Number(record.sgpa)))
+        .map(record => record.semester),
+    ).size
+  }, [semesterRecords])
+
+  const selectedSemesterCredits =
+    selectedSemesterModules.reduce(
+      (sum, module) =>
+        sum +
+        Number(module.credits || 0),
+      0,
+    )
+
+  const gradeRows =
+    selectedSemesterModules
+
+  /* =======================================================
+     CHART
+     ======================================================= */
+
+  const chartMax = 4
+
+  const chartRecords =
+    SEMESTERS.map(semester => {
+      const record =
+        semesterRecords.find(
+          item =>
+            item.semester ===
+            semester,
+        )
+
+      return {
+        semester,
+        sgpa:
+          record?.sgpa ?? null,
+      }
+    })
+
+  /* =======================================================
+     PROFILE HEADER
+     ======================================================= */
+
+  const displayName =
+    user?.fullName || 'Student'
+
+  const firstName =
+    displayName
+      .trim()
+      .split(/\s+/)[0] ||
+    'Student'
+
+  /* =======================================================
+     AI SERVICE CARDS
+     ======================================================= */
+
+  /* =======================================================
+     LOADING
+     ======================================================= */
+
+  if (loading) {
+    return (
+      <main className="student-dashboard">
+        <div className="student-page-shell">
+          <div className="sd-loading-screen">
+            <div className="sd-spinner" />
+            <strong>
+              Loading your academic dashboard
+            </strong>
+            <span>
+              Connecting to your student record...
+            </span>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  /* =======================================================
+     RENDER
+     ======================================================= */
+
+  return (
+    <main className="student-dashboard">
+
+      <div className="student-page-shell">
+
+        {/* =================================================
+            TOP SPACING / PAGE INTRO
+            ================================================= */}
+
+        <section className="sd-hero">
+
+          <div className="sd-hero-copy">
+
+            <span className="sd-eyebrow">
+              STUDENT DASHBOARD
+            </span>
+
+            <h1>
+              Welcome back, {firstName}.
+            </h1>
+
+            <p>
+              Manage your academic profile,
+              track semester performance,
+              record your grades, and access
+              personalized AI support.
+            </p>
+
+          </div>
+
+          <div className="sd-hero-actions">
+
+            <button
+              type="button"
+              className="sd-refresh-button"
+              onClick={loadDashboard}
+              title="Refresh dashboard"
+            >
+              <Icon name="refresh" />
+              Refresh
+            </button>
+
+          </div>
+
+        </section>
+
+        {/* =================================================
+            ALERTS
+            ================================================= */}
+
+        {message && (
+          <div className="sd-alert sd-alert-success">
+            <Icon name="check" />
+            <span>{message}</span>
+
+            <button
+              type="button"
+              onClick={() =>
+                setMessage('')
+              }
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {error && (
+          <div className="sd-alert sd-alert-error">
+            <Icon name="info" />
+            <span>{error}</span>
+
+            <button
+              type="button"
+              onClick={() =>
+                setError('')
+              }
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* =================================================
+            STUDENT IDENTITY CARD
+            ================================================= */}
+
+        <section className="sd-student-card">
+
+          <div className="sd-student-avatar">
+            {getInitials(displayName)}
+          </div>
+
+          <div className="sd-student-main">
+
+            <div className="sd-student-name-row">
+
+              <h2>
+                {displayName}
+              </h2>
+
+              {profileComplete && (
+                <span className="sd-profile-status">
+                  <span />
+                  Profile complete
+                </span>
+              )}
+
+            </div>
+
+            <p className="sd-student-id">
+              {studentId}
+            </p>
+
+            <div className="sd-student-meta">
+
+              <span>
+                <Icon name="graduation" />
+                {selectedDegree?.degreeName ||
+                  'Degree not selected'}
+              </span>
+
+              <span>
+                <Icon name="user" />
+                {selectedFaculty?.facultyName ||
+                  'Faculty not selected'}
+              </span>
+
+              {intake && (
+                <span>
+                  <Icon name="calendar" />
+                  Intake {intake}
+                </span>
+              )}
+
+            </div>
+
+          </div>
+
+          <button
+            type="button"
+            className="sd-edit-profile"
+            onClick={() =>
+              setProfileOpen(
+                previous =>
+                  !previous,
+              )
+            }
+          >
+            <Icon name="edit" />
+            {profileOpen
+              ? 'Close'
+              : profileComplete
+                ? 'Edit profile'
+                : 'Set up profile'}
+          </button>
+
+        </section>
+
+        {/* =================================================
+            PROFILE SETUP
+            ================================================= */}
+
+        {profileOpen && (
+          <section className="sd-panel sd-profile-panel">
+
+            <div className="sd-panel-heading">
+
+              <div className="sd-heading-icon">
+                <Icon name="user" />
+              </div>
+
+              <div>
+                <span className="sd-section-kicker">
+                  ACADEMIC PROFILE
+                </span>
+
+                <h2>
+                  {profileComplete
+                    ? 'Update your academic details'
+                    : 'Complete your academic profile'}
+                </h2>
+
+                <p>
+                  Select your actual academic
+                  programme. The available
+                  modules are loaded directly from
+                  the degree-module mapping.
+                </p>
+              </div>
+
+            </div>
+
+            <form
+              className="sd-profile-form"
+              onSubmit={
+                handleSaveProfile
+              }
+            >
+
+              {/* INTAKE */}
+
+              <label className="sd-field">
+
+                <span>
+                  Intake
+                  <b>*</b>
+                </span>
+
+                <select
+                  value={intake}
+                  onChange={event =>
+                    setIntake(
+                      event.target.value
+                        ? Number(
+                            event.target
+                              .value,
+                          )
+                        : '',
+                    )
+                  }
+                >
+                  <option value="">
+                    Select intake
+                  </option>
+
+                  {INTAKES.map(
+                    value => (
+                      <option
+                        key={value}
+                        value={value}
+                      >
+                        Intake {value}
+                      </option>
+                    ),
+                  )}
+                </select>
+
+              </label>
+
+              {/* FACULTY */}
+
+              <label className="sd-field">
+
+                <span>
+                  Faculty
+                  <b>*</b>
+                </span>
+
+                <select
+                  value={facultyId}
+                  onChange={event =>
+                    handleFacultyChange(
+                      event.target.value,
+                    )
+                  }
+                  disabled={
+                    loadingReferenceData
+                  }
+                >
+                  <option value="">
+                    {loadingReferenceData
+                      ? 'Loading faculties...'
+                      : faculties.length === 0
+                        ? 'No faculties available'
+                        : 'Select faculty'}
+                  </option>
+
+                  {faculties.map(
+                    faculty => (
+                      <option
+                        key={
+                          faculty.facultyId
+                        }
+                        value={
+                          faculty.facultyId
+                        }
+                      >
+                        {
+                          faculty.facultyName
+                        }
+                      </option>
+                    ),
+                  )}
+                </select>
+
+                {referenceError && (
+                  <div className="sd-reference-error">
+                    <span>
+                      {referenceError}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={
+                        loadReferenceData
+                      }
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+
+              </label>
+
+              {/* DEGREE */}
+
+              <label className="sd-field sd-field-wide">
+
+                <span>
+                  Degree programme
+                  <b>*</b>
+                </span>
+
+                <select
+                  value={degreeId}
+                  onChange={event => {
+                    setDegreeId(event.target.value)
+                    setModulesBySemester({})
+                  }}
+                  disabled={
+                    !facultyId
+                  }
+                >
+                  <option value="">
+                    {!facultyId
+                      ? 'Select faculty first'
+                      : 'Select degree programme'}
+                  </option>
+
+                  {filteredDegrees.map(
+                    degree => (
+                      <option
+                        key={
+                          degree.degreeId
+                        }
+                        value={
+                          degree.degreeId
+                        }
+                      >
+                        {
+                          degree.degreeName
+                        }
+                      </option>
+                    ),
+                  )}
+                </select>
+
+                {selectedDegree && (
+                  <small className="sd-field-hint">
+                    {selectedDegree.department}
+                    {' · '}
+                    {
+                      selectedDegree.durationYears
+                    }{' '}
+                    years
+                  </small>
+                )}
+
+              </label>
+
+              {/* YEAR */}
+
+              <label className="sd-field">
+
+                <span>
+                  Current year
+                  <b>*</b>
+                </span>
+
+                <select
+                  value={currentYear}
+                  onChange={event =>
+                    handleYearChange(
+                      event.target.value,
+                    )
+                  }
+                >
+                  <option value="">
+                    Select year
+                  </option>
+
+                  {YEARS.map(
+                    year => (
+                      <option
+                        key={year}
+                        value={year}
+                      >
+                        Year {year}
+                      </option>
+                    ),
+                  )}
+                </select>
+
+              </label>
+
+              {/* SEMESTER */}
+
+              <label className="sd-field">
+
+                <span>
+                  Current semester
+                  <b>*</b>
+                </span>
+
+                <select
+                  value={
+                    currentSemester
+                  }
+                  onChange={event =>
+                    handleSemesterChange(
+                      event.target.value,
+                    )
+                  }
+                  disabled={
+                    !currentYear
+                  }
+                >
+                  <option value="">
+                    {!currentYear
+                      ? 'Select year first'
+                      : 'Select semester'}
+                  </option>
+
+                  {availableSemesters.map(
+                    semester => (
+                      <option
+                        key={semester}
+                        value={semester}
+                      >
+                        Semester{' '}
+                        {semester}
+                      </option>
+                    ),
+                  )}
+                </select>
+
+                <small className="sd-field-hint">
+                  {currentYear
+                    ? `Year ${currentYear} contains semesters ${
+                        currentYear * 2 - 1
+                      } and ${
+                        currentYear * 2
+                      }.`
+                    : 'Semester is determined by your current year.'}
+                </small>
+
+              </label>
+
+              <div className="sd-profile-actions">
+
+                <button
+                  type="submit"
+                  className="sd-primary-button"
+                  disabled={
+                    savingProfile ||
+                    !profileComplete
+                  }
+                >
+                  <Icon name="save" />
+
+                  {savingProfile
+                    ? 'Saving...'
+                    : 'Save academic profile'}
+
+                  {!savingProfile && (
+                    <Icon name="arrow" />
+                  )}
+                </button>
+
+              </div>
+
+            </form>
+
+          </section>
+        )}
+
+        {/* =================================================
+            ACADEMIC OVERVIEW
+            ================================================= */}
+
+        <section className="sd-section">
+
+          <div className="sd-section-heading">
+
+            <div>
+              <span className="sd-section-kicker">
+                OVERVIEW
+              </span>
+
+              <h2>
+                Academic performance
+              </h2>
+            </div>
+
+            {profileComplete && (
+              <span className="sd-semester-context">
+                Year {currentYear}
+                {' · '}
+                Semester {currentSemester}
+              </span>
+            )}
+
+          </div>
+
+          <div className="sd-stat-grid">
+
+            <article className="sd-stat-card">
+
+              <div className="sd-stat-icon blue">
+                <Icon name="chart" />
+              </div>
+
+              <div>
+                <span>
+                  Current SGPA
+                </span>
+
+                <strong>
+                  {formatGPA(
+                    currentSGPA,
+                  )}
+                </strong>
+
+                <small>
+                  Latest recorded semester
+                </small>
+              </div>
+
+            </article>
+
+            <article className="sd-stat-card">
+
+              <div className="sd-stat-icon purple">
+                <Icon name="graduation" />
+              </div>
+
+              <div>
+                <span>
+                  Overall FGPA
+                </span>
+
+                <strong>
+                  {formatGPA(
+                    overallFGPA,
+                  )}
+                </strong>
+
+                <small>
+                  Based on saved semester GPA
+                </small>
+              </div>
+
+            </article>
+
+            <article className="sd-stat-card">
+
+              <div className="sd-stat-icon green">
+                <Icon name="calendar" />
+              </div>
+
+              <div>
+                <span>
+                  Semesters
+                </span>
+
+                <strong>
+                  {completedSemesterCount}
+                  <em>/ 8</em>
+                </strong>
+
+                <small>
+                  Semesters with SGPA
+                </small>
+              </div>
+
+            </article>
+
+            <article className="sd-stat-card">
+
+              <div className="sd-stat-icon orange">
+                <Icon name="book" />
+              </div>
+
+              <div>
+                <span>
+                  Current credits
+                </span>
+
+                <strong>
+                  {selectedSemesterCredits}
+                </strong>
+
+                <small>
+                  Mapped modules
+                </small>
+              </div>
+
+            </article>
+
+          </div>
+
+        </section>
+
+        {/* =================================================
+            PERFORMANCE + SGPA ENTRY
+            ================================================= */}
+
+        <section className="sd-main-grid">
+
+          {/* PERFORMANCE CHART */}
+
+          <article className="sd-panel sd-chart-panel">
+
+            <div className="sd-panel-heading compact">
+
+              <div className="sd-heading-icon">
+                <Icon name="chart" />
+              </div>
+
+              <div>
+                <span className="sd-section-kicker">
+                  PERFORMANCE TREND
+                </span>
+
+                <h2>
+                  Semester SGPA
+                </h2>
+
+                <p>
+                  Your chart updates automatically
+                  after an SGPA is saved.
+                </p>
+              </div>
+
+            </div>
+
+            <div className="sd-chart">
+
+              <div className="sd-y-axis">
+                <span>4.0</span>
+                <span>3.0</span>
+                <span>2.0</span>
+                <span>1.0</span>
+                <span>0.0</span>
+              </div>
+
+              <div className="sd-chart-area">
+
+                <div className="sd-grid-lines">
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                </div>
+
+                <div className="sd-bars">
+
+                  {chartRecords.map(
+                    item => {
+                      const height =
+                        item.sgpa === null
+                          ? 0
+                          : Math.max(
+                              4,
+                              Math.min(
+                                100,
+                                (item.sgpa /
+                                  chartMax) *
+                                  100,
+                              ),
+                            )
+
+                      return (
+                        <div
+                          className="sd-bar-column"
+                          key={
+                            item.semester
+                          }
+                        >
+
+                          <div className="sd-bar-value">
+                            {item.sgpa !==
+                            null
+                              ? item.sgpa.toFixed(
+                                  2,
+                                )
+                              : '—'}
+                          </div>
+
+                          <div className="sd-bar-track">
+
+                            {item.sgpa !==
+                              null && (
+                              <div
+                                className="sd-bar"
+                                style={{
+                                  height: `${height}%`,
+                                }}
+                              />
+                            )}
+
+                          </div>
+
+                          <span>
+                            S{
+                              item.semester
+                            }
+                          </span>
+
+                        </div>
+                      )
+                    },
+                  )}
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </article>
+
+          {/* SGPA ENTRY */}
+
+          <article className="sd-panel sd-sgpa-panel">
+
+            <div className="sd-panel-heading compact">
+
+              <div className="sd-heading-icon">
+                <Icon name="edit" />
+              </div>
+
+              <div>
+                <span className="sd-section-kicker">
+                  SEMESTER RECORD
+                </span>
+
+                <h2>
+                  Enter SGPA
+                </h2>
+
+                <p>
+                  Record the official SGPA for
+                  each completed semester.
+                </p>
+              </div>
+
+            </div>
+
+            <div className="sd-sgpa-list">
+
+              {SEMESTERS.map(
+                semester => (
+                  <div
+                    className="sd-sgpa-row"
+                    key={semester}
+                  >
+
+                    <div className="sd-sgpa-label">
+                      <strong>
+                        Semester{' '}
+                        {semester}
+                      </strong>
+
+                      <span>
+                        Year{' '}
+                        {Math.ceil(
+                          semester / 2,
+                        )}
+                      </span>
+                    </div>
+
+                    <input
+                      type="number"
+                      min="0"
+                      max="4"
+                      step="0.0001"
+                      placeholder="0.0000"
+                      value={
+                        sgpaValues[
+                          semester
+                        ] || ''
+                      }
+                      onChange={event =>
+                        handleSGPAChange(
+                          semester,
+                          event.target
+                            .value,
+                        )
+                      }
+                    />
+
+                    <button
+                      type="button"
+                      className="sd-small-save"
+                      onClick={() =>
+                        handleSaveSGPA(
+                          semester,
+                        )
+                      }
+                      disabled={
+                        savingSGPA ||
+                        !sgpaValues[
+                          semester
+                        ]
+                      }
+                    >
+                      {savingSGPA
+                        ? '...'
+                        : 'Save'}
+                    </button>
+
+                  </div>
+                ),
+              )}
+
+            </div>
+
+          </article>
+
+        </section>
+
+        {/* =================================================
+            COURSE GRADES
+            ================================================= */}
+
+        <section className="sd-panel sd-modules-panel">
+
+          <div className="sd-panel-heading">
+
+            <div className="sd-heading-icon">
+              <Icon name="book" />
+            </div>
+
+            <div>
+              <span className="sd-section-kicker">
+                ACADEMIC RESULTS
+              </span>
+
+              <h2>
+                Course modules & grades
+              </h2>
+
+              <p>
+                Modules are automatically loaded
+                from the selected degree and
+                semester. Enter the grade received
+                for each module.
+              </p>
+            </div>
+
+          </div>
+
+          {/* SEMESTER TABS */}
+
+          <div className="sd-semester-tabs">
+
+            {SEMESTERS.map(
+              semester => {
+                const hasGrades =
+                  (
+                    grades[
+                      semester
+                    ] || []
+                  ).length > 0
+
+                return (
+                  <button
+                    type="button"
+                    key={semester}
+                    className={
+                      selectedGradeSemester ===
+                      semester
+                        ? 'active'
+                        : ''
+                    }
+                    onClick={() =>
+                      handleGradeSemesterChange(
+                        semester,
+                      )
+                    }
+                    disabled={!degreeId}
+                  >
+                    <span>
+                      S{semester}
+                    </span>
+
+                    {hasGrades && (
+                      <i>
+                        <Icon name="check" />
+                      </i>
+                    )}
+                  </button>
+                )
+              },
+            )}
+
+          </div>
+
+          {!profileComplete ? (
+            <div className="sd-empty-state">
+
+              <div className="sd-empty-icon">
+                <Icon name="user" />
+              </div>
+
+              <h3>
+                Complete your academic profile
+              </h3>
+
+              <p>
+                Select your faculty, degree,
+                intake, year and semester above.
+                Your course modules will then
+                appear here automatically.
+              </p>
+
+              <button
+                type="button"
+                className="sd-primary-button"
+                onClick={() =>
+                  setProfileOpen(true)
+                }
+              >
+                <Icon name="edit" />
+                Complete profile
+              </button>
+
+            </div>
+          ) : loadingModules ? (
+            <div className="sd-module-loading">
+              <div className="sd-spinner" />
+              <span>
+                Loading modules for Semester{' '}
+                {selectedGradeSemester}...
+              </span>
+            </div>
+          ) : gradeRows.length === 0 ? (
+            <div className="sd-empty-state">
+
+              <div className="sd-empty-icon">
+                <Icon name="book" />
+              </div>
+
+              <h3>
+                No mapped modules
+              </h3>
+
+              <p>
+                No modules are mapped to{' '}
+                {selectedDegree?.degreeName ||
+                  'this degree'}{' '}
+                for Semester{' '}
+                {selectedGradeSemester}.
+              </p>
+
+            </div>
+          ) : (
+            <>
+
+              <div className="sd-module-summary">
+
+                <div>
+                  <strong>
+                    Semester{' '}
+                    {selectedGradeSemester}
+                  </strong>
+
+                  <span>
+                    {gradeRows.length}{' '}
+                    modules
+                  </span>
+                </div>
+
+                <div>
+                  <strong>
+                    {selectedSemesterCredits}
+                  </strong>
+
+                  <span>
+                    total credits
+                  </span>
+                </div>
+
+              </div>
+
+              <div className="sd-module-table-wrap">
+
+                <table className="sd-module-table">
+
+                  <thead>
+                    <tr>
+                      <th>
+                        Module
+                      </th>
+
+                      <th>
+                        Type
+                      </th>
+
+                      <th>
+                        Credits
+                      </th>
+
+                      <th>
+                        Category
+                      </th>
+
+                      <th>
+                        Grade
+                      </th>
+
+                      <th>
+                        GPA
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+
+                    {gradeRows.map(
+                      module => {
+                        const grade =
+                          getGradeForCourse(
+                            selectedGradeSemester,
+                            module.courseCode,
+                          )
+
+                        const point =
+                          getGradePoint(
+                            grade,
+                          )
+
+                        return (
+                          <tr
+                            key={
+                              module.courseCode
+                            }
+                          >
+
+                            <td>
+                              <div className="sd-module-name">
+
+                                <strong>
+                                  {
+                                    module.moduleName
+                                  }
+                                </strong>
+
+                                <span>
+                                  {
+                                    module.courseCode
+                                  }
+                                </span>
+
+                              </div>
+                            </td>
+
+                            <td>
+                              <span
+                                className={`sd-type-badge ${
+                                  module.moduleType ===
+                                  'Elective'
+                                    ? 'elective'
+                                    : 'core'
+                                }`}
+                              >
+                                {
+                                  module.moduleType ||
+                                  'Core'
+                                }
+                              </span>
+                            </td>
+
+                            <td>
+                              <span className="sd-credit">
+                                {
+                                  module.credits
+                                }
+                              </span>
+                            </td>
+
+                            <td>
+                              <span
+                                className={`sd-category-badge ${
+                                  module.moduleCategory ===
+                                  'GPA'
+                                    ? 'gpa'
+                                    : 'nongpa'
+                                }`}
+                              >
+                                {
+                                  module.moduleCategory
+                                }
+                              </span>
+                            </td>
+
+                            <td>
+
+                              <select
+                                className="sd-grade-select"
+                                value={
+                                  grade
+                                }
+                                onChange={event =>
+                                  updateGrade(
+                                    selectedGradeSemester,
+                                    module.courseCode,
+                                    event.target
+                                      .value,
+                                  )
+                                }
+                              >
+                                <option value="">
+                                  Select
+                                </option>
+
+                                {GRADE_OPTIONS.map(
+                                  option => (
+                                    <option
+                                      key={
+                                        option.grade
+                                      }
+                                      value={
+                                        option.grade
+                                      }
+                                    >
+                                      {
+                                        option.grade
+                                      }
+                                    </option>
+                                  ),
+                                )}
+
+                              </select>
+
+                            </td>
+
+                            <td>
+
+                              <span
+                                className={`sd-grade-point ${
+                                  point !==
+                                    null &&
+                                  point >=
+                                    3.7
+                                    ? 'excellent'
+                                    : point !==
+                                        null &&
+                                      point >=
+                                        3
+                                      ? 'good'
+                                      : point !==
+                                          null
+                                        ? 'low'
+                                        : ''
+                                }`}
+                              >
+                                {point !==
+                                null
+                                  ? point.toFixed(
+                                      1,
+                                    )
+                                  : '—'}
+                              </span>
+
+                            </td>
+
+                          </tr>
+                        )
+                      },
+                    )}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+
+              <div className="sd-module-footer">
+
+                <div className="sd-grade-note">
+                  <Icon name="info" />
+
+                  <span>
+                    GPA modules contribute to GPA.
+                    NON_GPA modules are recorded
+                    but should not be included in
+                    GPA calculations.
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  className="sd-primary-button"
+                  onClick={
+                    handleSaveGrades
+                  }
+                  disabled={
+                    savingGrades
+                  }
+                >
+                  <Icon name="save" />
+
+                  {savingGrades
+                    ? 'Saving grades...'
+                    : 'Save semester grades'}
+                </button>
+
+              </div>
+
+            </>
+          )}
+
+        </section>
+
+        {/* =================================================
+            AI SERVICES
+            ================================================= */}
+
+        <section className="sd-section sd-ai-section">
+
+          <div className="sd-section-heading">
+
+            <div>
+              <span className="sd-section-kicker">
+                AI SUPPORT
+              </span>
+
+              <h2>
+                Your academic intelligence tools
+              </h2>
+
+              <p>
+                Three AI services designed for
+                prediction, optimization and
+                explainable academic reasoning.
+              </p>
+            </div>
+
+          </div>
+
+          <div className="sd-ai-grid">
+
+            {/* NEURAL NETWORK */}
+
+            <Link
+              to="/prediction"
+              className="sd-ai-card prediction"
+            >
+
+              <div className="sd-ai-top">
+
+                <div className="sd-ai-icon">
+                  <Icon name="brain" />
+                </div>
+
+                <span className="sd-ai-arrow">
+                  <Icon name="arrow" />
+                </span>
+
+              </div>
+
+              <span className="sd-ai-label">
+                NEURAL NETWORK
+              </span>
+
+              <h3>
+                Performance Prediction
+              </h3>
+
+              <p>
+                Predict your expected academic
+                performance using your academic
+                and behavioural information.
+              </p>
+
+              <span className="sd-ai-action">
+                Open prediction
+                <Icon name="arrow" />
+              </span>
+
+            </Link>
+
+            {/* GENETIC ALGORITHM */}
+
+            <Link
+              to="/study-plan"
+              className="sd-ai-card optimization"
+            >
+
+              <div className="sd-ai-top">
+
+                <div className="sd-ai-icon">
+                  <Icon name="spark" />
+                </div>
+
+                <span className="sd-ai-arrow">
+                  <Icon name="arrow" />
+                </span>
+
+              </div>
+
+              <span className="sd-ai-label">
+                GENETIC ALGORITHM
+              </span>
+
+              <h3>
+                Personalized Study Plan
+              </h3>
+
+              <p>
+                Allocate your available study
+                hours intelligently across modules
+                according to priorities and credits.
+              </p>
+
+              <span className="sd-ai-action">
+                Create study plan
+                <Icon name="arrow" />
+              </span>
+
+            </Link>
+
+            {/* RULE BASED */}
+
+            <Link
+              to="/eligibility"
+              className="sd-ai-card eligibility"
+            >
+
+              <div className="sd-ai-top">
+
+                <div className="sd-ai-icon">
+                  <Icon name="shield" />
+                </div>
+
+                <span className="sd-ai-arrow">
+                  <Icon name="arrow" />
+                </span>
+
+              </div>
+
+              <span className="sd-ai-label">
+                RULE-BASED SYSTEM
+              </span>
+
+              <h3>
+                Academic Eligibility
+              </h3>
+
+              <p>
+                Check academic requirements and
+                receive an explainable eligibility
+                decision based on university rules.
+              </p>
+
+              <span className="sd-ai-action">
+                Check eligibility
+                <Icon name="arrow" />
+              </span>
+
+            </Link>
+
+          </div>
+
+        </section>
+
+        {/* =================================================
+            FOOTER NOTE
+            ================================================= */}
+
+        <div className="sd-dashboard-note">
+
+          <Icon name="info" />
+
+          <p>
+            Academic information entered here is
+            stored against your student account and
+            is used to provide personalized decision
+            support. AI outputs are advisory and do
+            not replace official university decisions.
+          </p>
+
+        </div>
+
+      </div>
+
+    </main>
+  )
+}
+
+export default StudentDashboard

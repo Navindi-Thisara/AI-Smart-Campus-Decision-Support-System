@@ -10,6 +10,10 @@ function Sidebar() {
 
       <div className="sidebar-inner">
 
+        {/* =====================================================
+            WORKSPACE
+            ===================================================== */}
+
         <div className="sidebar-section">
 
           <span className="sidebar-label">
@@ -17,14 +21,24 @@ function Sidebar() {
           </span>
 
           <NavLink
-            to="/dashboard"
+            to="/student-dashboard"
             className={navClass}
           >
-            <span className="sidebar-icon">⌂</span>
-            <span>Dashboard</span>
+            <span className="sidebar-icon">
+              ⌂
+            </span>
+
+            <span>
+              Dashboard
+            </span>
           </NavLink>
 
         </div>
+
+
+        {/* =====================================================
+            AI SERVICES
+            ===================================================== */}
 
         <div className="sidebar-section">
 
@@ -36,27 +50,49 @@ function Sidebar() {
             to="/prediction"
             className={navClass}
           >
-            <span className="sidebar-icon">✦</span>
-            <span>Performance Prediction</span>
+            <span className="sidebar-icon">
+              ✦
+            </span>
+
+            <span>
+              Performance Prediction
+            </span>
           </NavLink>
+
 
           <NavLink
             to="/study-plan"
             className={navClass}
           >
-            <span className="sidebar-icon">◈</span>
-            <span>Study Plan</span>
+            <span className="sidebar-icon">
+              ◈
+            </span>
+
+            <span>
+              Study Plan
+            </span>
           </NavLink>
+
 
           <NavLink
             to="/eligibility"
             className={navClass}
           >
-            <span className="sidebar-icon">✓</span>
-            <span>Eligibility</span>
+            <span className="sidebar-icon">
+              ✓
+            </span>
+
+            <span>
+              Eligibility
+            </span>
           </NavLink>
 
         </div>
+
+
+        {/* =====================================================
+            ACADEMIC
+            ===================================================== */}
 
         <div className="sidebar-section">
 
@@ -68,51 +104,14 @@ function Sidebar() {
             to="/history"
             className={navClass}
           >
-            <span className="sidebar-icon">◷</span>
-            <span>Academic History</span>
+            <span className="sidebar-icon">
+              ◷
+            </span>
+
+            <span>
+              Academic History
+            </span>
           </NavLink>
-
-        </div>
-
-        <div className="sidebar-section">
-
-          <span className="sidebar-label">
-            Account
-          </span>
-
-          <NavLink
-            to="/profile"
-            className={navClass}
-          >
-            <span className="sidebar-icon">◯</span>
-            <span>Profile</span>
-          </NavLink>
-
-          <NavLink
-            to="/settings"
-            className={navClass}
-          >
-            <span className="sidebar-icon">⚙</span>
-            <span>Settings</span>
-          </NavLink>
-
-        </div>
-
-        <div className="sidebar-bottom">
-
-          <div className="sidebar-ai-status">
-            <span className="status-indicator" />
-
-            <div>
-              <strong>AI Services</strong>
-              <span>System operational</span>
-            </div>
-          </div>
-
-          <button className="sidebar-logout">
-            ↪
-            <span>Sign out</span>
-          </button>
 
         </div>
 

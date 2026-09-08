@@ -1,0 +1,95 @@
+/* =========================================================
+   DASHBOARD LAYOUT
+   ========================================================= */
+
+.dashboard-layout {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   NORMAL DASHBOARD
+   ========================================================= */
+
+.dashboard-body {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.dashboard-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   STUDENT DASHBOARD
+   No sidebar.
+   No left offset.
+   No inherited sidebar width.
+   ========================================================= */
+
+.student-dashboard-layout {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.student-dashboard-body {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.student-dashboard-main {
+  display: block;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  box-sizing: border-box;
+}
+
+/*
+ * IMPORTANT:
+ * Navbar is rendered before dashboard-body.
+ *
+ * These rules only provide space if your Navbar is fixed.
+ * The student page itself gets the final top spacing below.
+ */
+.student-dashboard-layout .student-dashboard {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .dashboard-body,
+  .student-dashboard-body {
+    width: 100%;
+  }
+}

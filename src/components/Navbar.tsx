@@ -1,30 +1,121 @@
-import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import {
+  useEffect,
+  useState,
+} from 'react'
+
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
+
 import './Navbar.css'
 
+
 const NAV_ITEMS = [
-  { id: 'home', label: 'Home' },
-  { id: 'about', label: 'About' },
-  { id: 'services', label: 'Services' },
-  { id: 'contact', label: 'Contact' },
+  {
+    id: 'home',
+    label: 'Home',
+  },
+  {
+    id: 'about',
+    label: 'About',
+  },
+  {
+    id: 'services',
+    label: 'Services',
+  },
+  {
+    id: 'contact',
+    label: 'Contact',
+  },
 ]
+
 
 const NAVBAR_OFFSET = 80
 
-function Navbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const [activeSection, setActiveSection] = useState('home')
+function Navbar() {
+
+  const [mobileMenuOpen, setMobileMenuOpen] =
+    useState(false)
+
+  const [activeSection, setActiveSection] =
+    useState('home')
+
+  const [isAuthenticated, setIsAuthenticated] =
+    useState(false)
+
+  const [darkMode, setDarkMode] =
+    useState(
+      () =>
+        localStorage.getItem('kdu-theme') ===
+        'dark',
+    )
+
 
   const location = useLocation()
   const navigate = useNavigate()
 
-  const [darkMode, setDarkMode] = useState(
-    () => localStorage.getItem('kdu-theme') === 'dark',
-  )
+
+  /* =========================================================
+     CHECK AUTHENTICATION
+     ========================================================= */
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('kdu-theme')
+
+    const checkAuthentication = () => {
+
+      const authenticated =
+        localStorage.getItem(
+          'isAuthenticated',
+        ) === 'true'
+
+      const storedUser =
+        localStorage.getItem('user')
+
+      setIsAuthenticated(
+        authenticated && !!storedUser,
+      )
+    }
+
+
+    checkAuthentication()
+
+    window.addEventListener(
+      'storage',
+      checkAuthentication,
+    )
+
+    window.addEventListener(
+      'auth-changed',
+      checkAuthentication,
+    )
+
+    return () => {
+
+      window.removeEventListener(
+        'storage',
+        checkAuthentication,
+      )
+
+      window.removeEventListener(
+        'auth-changed',
+        checkAuthentication,
+      )
+    }
+
+  }, [location.pathname])
+
+
+  /* =========================================================
+     THEME
+     ========================================================= */
+
+  useEffect(() => {
+
+    const savedTheme =
+      localStorage.getItem('kdu-theme')
 
     const theme =
       savedTheme === 'dark'
@@ -36,91 +127,133 @@ function Navbar() {
       theme,
     )
 
-    setDarkMode(theme === 'dark')
+    setDarkMode(
+      theme === 'dark',
+    )
+
   }, [])
 
 
   const toggleTheme = () => {
+
     const nextTheme =
       darkMode
         ? 'light'
         : 'dark'
+
 
     document.documentElement.setAttribute(
       'data-theme',
       nextTheme,
     )
 
+
     localStorage.setItem(
       'kdu-theme',
       nextTheme,
     )
 
-    setDarkMode(nextTheme === 'dark')
+
+    setDarkMode(
+      nextTheme === 'dark',
+    )
   }
 
-  // MOBILE MENU
+
+  /* =========================================================
+     MOBILE MENU
+     ========================================================= */
+
   const closeMobileMenu = () => {
     setMobileMenuOpen(false)
   }
 
 
   useEffect(() => {
+
     document.body.style.overflow =
       mobileMenuOpen
         ? 'hidden'
         : ''
 
+
     return () => {
       document.body.style.overflow = ''
     }
+
   }, [mobileMenuOpen])
 
 
   useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
+
+    const handleEscape = (
+      event: KeyboardEvent,
+    ) => {
+
       if (event.key === 'Escape') {
         closeMobileMenu()
       }
     }
+
 
     document.addEventListener(
       'keydown',
       handleEscape,
     )
 
+
     return () => {
+
       document.removeEventListener(
         'keydown',
         handleEscape,
       )
     }
+
   }, [])
+
+
+  /* =========================================================
+     ACTIVE HOME SECTION
+     ========================================================= */
 
   useEffect(() => {
 
     if (location.pathname !== '/') {
+
       setActiveSection('')
+
       return
     }
 
+
     const updateActiveSection = () => {
+
       const scrollPosition =
-        window.scrollY + NAVBAR_OFFSET + 120
+        window.scrollY +
+        NAVBAR_OFFSET +
+        120
+
 
       const sections = NAV_ITEMS
         .map((item) => {
+
           const element =
-            document.getElementById(item.id)
+            document.getElementById(
+              item.id,
+            )
+
 
           if (!element) {
             return null
           }
 
+
           return {
             id: item.id,
             top: element.offsetTop,
           }
+
         })
         .filter(
           (
@@ -128,43 +261,68 @@ function Navbar() {
           ): section is {
             id: string
             top: number
-          } => section !== null,
+          } =>
+            section !== null,
         )
 
+
       if (!sections.length) {
+
         setActiveSection('home')
+
         return
       }
 
-      let currentSection = sections[0].id
 
-      for (const section of sections) {
+      let currentSection =
+        sections[0].id
+
+
+      for (
+        const section of sections
+      ) {
+
         if (
-          scrollPosition >= section.top
+          scrollPosition >=
+          section.top
         ) {
-          currentSection = section.id
+
+          currentSection =
+            section.id
+
         } else {
+
           break
         }
       }
 
-      setActiveSection(currentSection)
+
+      setActiveSection(
+        currentSection,
+      )
     }
 
+
     updateActiveSection()
+
 
     window.addEventListener(
       'scroll',
       updateActiveSection,
-      { passive: true },
+      {
+        passive: true,
+      },
     )
+
 
     window.addEventListener(
       'resize',
       updateActiveSection,
     )
 
+
     return () => {
+
       window.removeEventListener(
         'scroll',
         updateActiveSection,
@@ -175,108 +333,196 @@ function Navbar() {
         updateActiveSection,
       )
     }
+
   }, [location.pathname])
 
+
+  /* =========================================================
+     HASH NAVIGATION
+     ========================================================= */
+
   useEffect(() => {
+
     if (location.pathname !== '/') {
       return
     }
+
 
     if (!location.hash) {
       return
     }
 
+
     const id =
       location.hash.substring(1)
 
+
     const timer =
       window.setTimeout(() => {
+
         const element =
           document.getElementById(id)
+
 
         if (!element) {
           return
         }
 
+
         const top =
-          element.getBoundingClientRect().top +
+          element.getBoundingClientRect()
+            .top +
           window.scrollY -
           NAVBAR_OFFSET
+
 
         window.scrollTo({
           top: Math.max(top, 0),
           behavior: 'smooth',
         })
 
+
         setActiveSection(id)
+
       }, 100)
+
 
     return () => {
       window.clearTimeout(timer)
     }
+
   }, [
     location.pathname,
     location.hash,
   ])
 
-  // NAVIGATION
+
+  /* =========================================================
+     NAVIGATION
+     ========================================================= */
 
   const handleNavClick = (
     event: React.MouseEvent<HTMLAnchorElement>,
     id: string,
   ) => {
+
     closeMobileMenu()
+
 
     if (location.pathname !== '/') {
       return
     }
 
+
     const element =
       document.getElementById(id)
+
 
     if (!element) {
       return
     }
 
+
     event.preventDefault()
 
+
     const top =
-      element.getBoundingClientRect().top +
+      element.getBoundingClientRect()
+        .top +
       window.scrollY -
       NAVBAR_OFFSET
+
 
     window.scrollTo({
       top: Math.max(top, 0),
       behavior: 'smooth',
     })
 
+
     setActiveSection(id)
 
-    navigate(`/#${id}`, {
-      replace: true,
-    })
+
+    navigate(
+      `/#${id}`,
+      {
+        replace: true,
+      },
+    )
   }
 
+
   const handleBrandClick = () => {
+
     closeMobileMenu()
 
+
     if (location.pathname === '/') {
+
       window.scrollTo({
         top: 0,
         behavior: 'smooth',
       })
 
+
       setActiveSection('home')
+
       return
     }
+
 
     setActiveSection('')
   }
 
-  const getNavLinkClass = (id: string) => {
+
+  /* =========================================================
+     LOGOUT
+     ========================================================= */
+
+  const handleLogout = () => {
+
+    localStorage.removeItem('user')
+
+    localStorage.removeItem(
+      'isAuthenticated',
+    )
+
+
+    setIsAuthenticated(false)
+
+    closeMobileMenu()
+
+
+    /*
+      Notify other components that
+      authentication has changed.
+    */
+
+    window.dispatchEvent(
+      new Event('auth-changed'),
+    )
+
+
+    navigate(
+      '/login',
+      {
+        replace: true,
+      },
+    )
+  }
+
+
+  /* =========================================================
+     DESKTOP NAV CLASS
+     ========================================================= */
+
+  const getNavLinkClass = (
+    id: string,
+  ) => {
+
     const isActive =
       location.pathname === '/' &&
       activeSection === id
+
 
     return `navbar-link ${
       isActive
@@ -286,10 +532,18 @@ function Navbar() {
   }
 
 
-  const getMobileNavLinkClass = (id: string) => {
+  /* =========================================================
+     MOBILE NAV CLASS
+     ========================================================= */
+
+  const getMobileNavLinkClass = (
+    id: string,
+  ) => {
+
     const isActive =
       location.pathname === '/' &&
       activeSection === id
+
 
     return `mobile-nav-link ${
       isActive
@@ -298,10 +552,16 @@ function Navbar() {
     }`
   }
 
+
+  /* =========================================================
+     RENDER
+     ========================================================= */
+
   return (
     <header className="navbar">
 
       <div className="navbar-container">
+
 
         {/* =================================================
             BRAND
@@ -323,6 +583,7 @@ function Navbar() {
             />
 
           </div>
+
 
           <div className="navbar-brand-text">
 
@@ -348,23 +609,29 @@ function Navbar() {
           aria-label="Primary navigation"
         >
 
-          {NAV_ITEMS.map((item) => (
+          {NAV_ITEMS.map(
+            (item) => (
 
-            <a
-              key={item.id}
-              href={`/#${item.id}`}
-              className={getNavLinkClass(item.id)}
-              onClick={(event) =>
-                handleNavClick(
-                  event,
-                  item.id,
-                )
-              }
-            >
-              {item.label}
-            </a>
+              <a
+                key={item.id}
+                href={`/#${item.id}`}
+                className={
+                  getNavLinkClass(
+                    item.id,
+                  )
+                }
+                onClick={(event) =>
+                  handleNavClick(
+                    event,
+                    item.id,
+                  )
+                }
+              >
+                {item.label}
+              </a>
 
-          ))}
+            ),
+          )}
 
         </nav>
 
@@ -374,6 +641,9 @@ function Navbar() {
             ================================================= */}
 
         <div className="navbar-actions">
+
+
+          {/* THEME */}
 
           <button
             type="button"
@@ -395,7 +665,9 @@ function Navbar() {
               className="theme-icon"
               aria-hidden="true"
             >
-              {darkMode ? '☀' : '☾'}
+              {darkMode
+                ? '☀'
+                : '☾'}
             </span>
 
             <span className="theme-label">
@@ -407,20 +679,86 @@ function Navbar() {
           </button>
 
 
-          <Link
-            to="/login"
-            className="navbar-login"
-          >
-            Login
-          </Link>
+          {/* =================================================
+              LOGGED OUT
+              ================================================= */}
+
+          {!isAuthenticated && (
+
+            <>
+
+              <Link
+                to="/login"
+                className="navbar-login"
+              >
+                Login
+              </Link>
 
 
-          <Link
-            to="/register"
-            className="navbar-register"
-          >
-            Get Started
-          </Link>
+              <Link
+                to="/register"
+                className="navbar-register"
+              >
+                Get Started
+              </Link>
+
+            </>
+
+          )}
+
+
+          {/* =================================================
+              LOGGED IN
+              ================================================= */}
+
+          {isAuthenticated && (
+
+            <button
+              type="button"
+              className="navbar-logout"
+              onClick={handleLogout}
+            >
+
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+
+                <path
+                  d="M10 17l5-5-5-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+
+                <path
+                  d="M15 12H3"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+
+                <path
+                  d="M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+
+              </svg>
+
+              <span>
+                Logout
+              </span>
+
+            </button>
+
+          )}
 
         </div>
 
@@ -430,6 +768,9 @@ function Navbar() {
             ================================================= */}
 
         <div className="mobile-actions">
+
+
+          {/* THEME */}
 
           <button
             type="button"
@@ -446,11 +787,15 @@ function Navbar() {
               className="theme-icon"
               aria-hidden="true"
             >
-              {darkMode ? '☀' : '☾'}
+              {darkMode
+                ? '☀'
+                : '☾'}
             </span>
 
           </button>
 
+
+          {/* MENU */}
 
           <button
             type="button"
@@ -505,44 +850,121 @@ function Navbar() {
           aria-label="Mobile navigation"
         >
 
-          {NAV_ITEMS.map((item) => (
 
-            <a
-              key={item.id}
-              href={`/#${item.id}`}
-              className={getMobileNavLinkClass(item.id)}
-              onClick={(event) =>
-                handleNavClick(
-                  event,
-                  item.id,
-                )
-              }
-            >
-              {item.label}
-            </a>
+          {NAV_ITEMS.map(
+            (item) => (
 
-          ))}
+              <a
+                key={item.id}
+                href={`/#${item.id}`}
+                className={
+                  getMobileNavLinkClass(
+                    item.id,
+                  )
+                }
+                onClick={(event) =>
+                  handleNavClick(
+                    event,
+                    item.id,
+                  )
+                }
+              >
+                {item.label}
+              </a>
+
+            ),
+          )}
 
 
           <div className="mobile-menu-divider" />
 
 
-          <Link
-            to="/login"
-            className="mobile-login"
-            onClick={closeMobileMenu}
-          >
-            Login
-          </Link>
+          {/* =================================================
+              MOBILE LOGGED OUT
+              ================================================= */}
+
+          {!isAuthenticated && (
+
+            <>
+
+              <Link
+                to="/login"
+                className="mobile-login"
+                onClick={
+                  closeMobileMenu
+                }
+              >
+                Login
+              </Link>
 
 
-          <Link
-            to="/register"
-            className="mobile-register"
-            onClick={closeMobileMenu}
-          >
-            Get Started
-          </Link>
+              <Link
+                to="/register"
+                className="mobile-register"
+                onClick={
+                  closeMobileMenu
+                }
+              >
+                Get Started
+              </Link>
+
+            </>
+
+          )}
+
+
+          {/* =================================================
+              MOBILE LOGGED IN
+              ================================================= */}
+
+          {isAuthenticated && (
+
+            <button
+              type="button"
+              className="mobile-logout"
+              onClick={handleLogout}
+            >
+
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+
+                <path
+                  d="M10 17l5-5-5-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+
+                <path
+                  d="M15 12H3"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+
+                <path
+                  d="M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+
+              </svg>
+
+              <span>
+                Logout
+              </span>
+
+            </button>
+
+          )}
 
         </nav>
 

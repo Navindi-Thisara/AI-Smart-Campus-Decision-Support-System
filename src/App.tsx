@@ -16,6 +16,7 @@ import Prediction from './pages/Prediction'
 
 import './App.css'
 
+
 function App() {
   return (
     <BrowserRouter>
@@ -83,22 +84,28 @@ function App() {
 
 
         {/* =====================================================
-            APPLICATION
+            LOGGED-IN APPLICATION
             ===================================================== */}
 
         <Route element={<DashboardLayout />}>
+
+          {/* Student dashboard */}
 
           <Route
             path="/student-dashboard"
             element={<StudentDashboard />}
           />
 
+
+          {/* Staff dashboard */}
+
           <Route
             path="/staff-dashboard"
             element={<StaffDashboard />}
           />
 
-          {/* Existing dashboard */}
+
+          {/* Existing application pages */}
 
           <Route
             path="/dashboard"
