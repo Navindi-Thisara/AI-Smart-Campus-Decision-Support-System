@@ -57,11 +57,6 @@ function Navbar() {
   const location = useLocation()
   const navigate = useNavigate()
 
-
-  /* =========================================================
-     CHECK AUTHENTICATION
-     ========================================================= */
-
   useEffect(() => {
 
     const checkAuthentication = () => {
@@ -106,11 +101,6 @@ function Navbar() {
     }
 
   }, [location.pathname])
-
-
-  /* =========================================================
-     THEME
-     ========================================================= */
 
   useEffect(() => {
 
@@ -159,11 +149,6 @@ function Navbar() {
     )
   }
 
-
-  /* =========================================================
-     MOBILE MENU
-     ========================================================= */
-
   const closeMobileMenu = () => {
     setMobileMenuOpen(false)
   }
@@ -211,11 +196,6 @@ function Navbar() {
     }
 
   }, [])
-
-
-  /* =========================================================
-     ACTIVE HOME SECTION
-     ========================================================= */
 
   useEffect(() => {
 
@@ -336,11 +316,6 @@ function Navbar() {
 
   }, [location.pathname])
 
-
-  /* =========================================================
-     HASH NAVIGATION
-     ========================================================= */
-
   useEffect(() => {
 
     if (location.pathname !== '/') {
@@ -395,11 +370,6 @@ function Navbar() {
     location.pathname,
     location.hash,
   ])
-
-
-  /* =========================================================
-     NAVIGATION
-     ========================================================= */
 
   const handleNavClick = (
     event: React.MouseEvent<HTMLAnchorElement>,
@@ -473,11 +443,6 @@ function Navbar() {
     setActiveSection('')
   }
 
-
-  /* =========================================================
-     LOGOUT
-     ========================================================= */
-
   const handleLogout = () => {
 
     localStorage.removeItem('user')
@@ -491,12 +456,6 @@ function Navbar() {
 
     closeMobileMenu()
 
-
-    /*
-      Notify other components that
-      authentication has changed.
-    */
-
     window.dispatchEvent(
       new Event('auth-changed'),
     )
@@ -509,11 +468,6 @@ function Navbar() {
       },
     )
   }
-
-
-  /* =========================================================
-     DESKTOP NAV CLASS
-     ========================================================= */
 
   const getNavLinkClass = (
     id: string,
@@ -531,11 +485,6 @@ function Navbar() {
     }`
   }
 
-
-  /* =========================================================
-     MOBILE NAV CLASS
-     ========================================================= */
-
   const getMobileNavLinkClass = (
     id: string,
   ) => {
@@ -551,11 +500,6 @@ function Navbar() {
         : ''
     }`
   }
-
-
-  /* =========================================================
-     RENDER
-     ========================================================= */
 
   return (
     <header className="navbar">

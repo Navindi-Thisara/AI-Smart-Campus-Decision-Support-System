@@ -89,32 +89,6 @@ function Sidebar() {
 
         </div>
 
-
-        {/* =====================================================
-            ACADEMIC
-            ===================================================== */}
-
-        <div className="sidebar-section">
-
-          <span className="sidebar-label">
-            Academic
-          </span>
-
-          <NavLink
-            to="/history"
-            className={navClass}
-          >
-            <span className="sidebar-icon">
-              ◷
-            </span>
-
-            <span>
-              Academic History
-            </span>
-          </NavLink>
-
-        </div>
-
       </div>
 
     </aside>

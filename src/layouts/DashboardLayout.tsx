@@ -1,7 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom'
 
 import Navbar from '../components/Navbar'
-import Sidebar from '../components/Sidebar'
 import Footer from '../components/Footer'
 
 import './DashboardLayout.css'
@@ -26,8 +25,6 @@ function DashboardLayout() {
           isStudentDashboard ? 'student-dashboard-body' : ''
         }`}
       >
-        {!isStudentDashboard && <Sidebar />}
-
         <main
           className={`dashboard-main ${
             isStudentDashboard ? 'student-dashboard-main' : ''
@@ -37,7 +34,6 @@ function DashboardLayout() {
         </main>
       </div>
 
-      {/* Footer should appear on ALL dashboard pages */}
       <Footer />
     </div>
   )
