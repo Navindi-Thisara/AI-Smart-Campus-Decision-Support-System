@@ -52,9 +52,6 @@ public class EligibilityService {
 
         List<String> explanations = new ArrayList<>();
 
-        /*
-         * Find student.
-         */
         User user = userRepository.findByStudentId(studentId)
                 .orElseThrow(() ->
                         new RuntimeException(
@@ -62,10 +59,7 @@ public class EligibilityService {
                         )
                 );
 
-        /*
-         * RULE 3:
-         * Current academic profile must exist.
-         */
+        
         StudentAcademicProfile profile =
                 profileRepository.findByUser(user)
                         .orElse(null);
@@ -89,9 +83,7 @@ public class EligibilityService {
                 "Academic profile exists."
         );
 
-        /*
-         * Retrieve attendance and fee information.
-         */
+       
         StudentEligibilityRecord record =
                 eligibilityRepository
                         .findByUserAndSemester(user, semester)
@@ -112,10 +104,7 @@ public class EligibilityService {
             );
         }
 
-        /*
-         * RULE 1:
-         * Attendance must be at least 80%.
-         */
+        
         boolean attendancePassed =
                 record.getAttendancePercentage()
                         .compareTo(MIN_ATTENDANCE) >= 0;
@@ -137,10 +126,6 @@ public class EligibilityService {
             );
         }
 
-        /*
-         * RULE 2:
-         * Semester fee must be paid.
-         */
         boolean feePassed =
                 Boolean.TRUE.equals(record.getFeePaid());
 
@@ -157,12 +142,6 @@ public class EligibilityService {
             );
         }
 
-        /*
-         * RULE 4:
-         *
-         * Previous required modules must be successfully
-         * completed before degree progression.
-         */
         boolean previousModulesPassed =
                 checkPreviousRequiredModules(
                         user,
@@ -171,13 +150,7 @@ public class EligibilityService {
                         explanations
                 );
 
-        /*
-         * FINAL DECISION
-         */
-
-        /*
-         * All rules satisfied.
-         */
+        
         if (attendancePassed
                 && feePassed
                 && previousModulesPassed) {
@@ -191,10 +164,6 @@ public class EligibilityService {
             );
         }
 
-        /*
-         * Attendance or fee failure means
-         * the student is not eligible.
-         */
         if (!attendancePassed || !feePassed) {
 
             return new EligibilityResponse(
@@ -206,10 +175,6 @@ public class EligibilityService {
             );
         }
 
-        /*
-         * Attendance and fee are satisfied,
-         * but previous required modules are incomplete.
-         */
         return new EligibilityResponse(
                 studentId,
                 semester,
@@ -220,20 +185,6 @@ public class EligibilityService {
     }
 
 
-/**
- * RULE 4:
- *
- * Checks whether all required CORE modules from
- * previous semesters have been successfully completed.
- *
- * Example:
- *
- * Current semester = 2
- * → Check Semester 1
- *
- * Current semester = 3
- * → Check Semesters 1 and 2
- */
 private boolean checkPreviousRequiredModules(
         User user,
         StudentAcademicProfile profile,
@@ -241,9 +192,7 @@ private boolean checkPreviousRequiredModules(
         List<String> explanations
 ) {
 
-    /*
-     * Semester 1 has no previous semesters.
-     */
+    
     if (currentSemester == null || currentSemester <= 1) {
 
         explanations.add(
@@ -254,22 +203,14 @@ private boolean checkPreviousRequiredModules(
         return true;
     }
 
-    /*
-     * Get all student results.
-     *
-     * Results are ordered by semester and course code.
-     */
+   
     List<StudentResult> studentResults =
             studentResultRepository
                     .findByUserOrderBySemesterAscCourseCodeAsc(
                             user
                     );
 
-    /*
-     * Create a lookup map:
-     *
-     * courseCode -> StudentResult
-     */
+    
     Map<String, StudentResult> resultMap =
             new HashMap<>();
 
@@ -286,24 +227,12 @@ private boolean checkPreviousRequiredModules(
 
     boolean allPreviousModulesPassed = true;
 
-    /*
-     * Check every previous semester.
-     *
-     * Example:
-     * Current semester = 2
-     * Loop: semester 1
-     *
-     * Current semester = 3
-     * Loop: semesters 1 and 2
-     */
+    
     for (int semester = 1;
          semester < currentSemester;
          semester++) {
 
-        /*
-         * Get all modules for this student's degree
-         * and this particular semester.
-         */
+       
         List<CourseModule> previousModules =
                 courseModuleRepository
                         .findModulesByDegreeAndSemester(
@@ -311,9 +240,7 @@ private boolean checkPreviousRequiredModules(
                                 semester
                         );
 
-        /*
-         * Check each required module.
-         */
+        
         for (CourseModule courseModule : previousModules) {
 
             String courseCode =
@@ -322,9 +249,7 @@ private boolean checkPreviousRequiredModules(
             StudentResult result =
                     resultMap.get(courseCode);
 
-            /*
-             * No result found.
-             */
+            
             if (result == null) {
 
                 allPreviousModulesPassed = false;
@@ -339,9 +264,7 @@ private boolean checkPreviousRequiredModules(
                 continue;
             }
 
-            /*
-             * Result exists but grade is not passing.
-             */
+           
             if (!isPassingGrade(result.getGrade())) {
 
                 allPreviousModulesPassed = false;
@@ -359,9 +282,7 @@ private boolean checkPreviousRequiredModules(
         }
     }
 
-    /*
-     * All previous required modules passed.
-     */
+   
     if (allPreviousModulesPassed) {
 
         explanations.add(
@@ -375,10 +296,6 @@ private boolean checkPreviousRequiredModules(
 
 
 
-    /**
-     * Determines whether a grade represents
-     * successful completion of a module.
-     */
     private boolean isPassingGrade(String grade) {
 
         if (grade == null) {

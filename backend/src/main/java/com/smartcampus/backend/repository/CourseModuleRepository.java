@@ -10,18 +10,7 @@ import java.util.List;
 public interface CourseModuleRepository
         extends JpaRepository<CourseModule, String> {
 
-    /**
-     * Get all course modules belonging to a specific degree
-     * and semester.
-     *
-     * The relationship is:
-     *
-     * degree_modules.degree_id
-     *        ↓
-     * degree_modules.course_code
-     *        ↓
-     * course_modules.course_code
-     */
+    
     @Query("""
     SELECT cm
     FROM CourseModule cm
@@ -39,9 +28,5 @@ List<CourseModule> findModulesByDegreeAndSemester(
         @Param("semester") Integer semester
 );
 
-    /**
-     * Get all course modules for a specific semester,
-     * ordered by course code.
-     */
     List<CourseModule> findBySemesterOrderByCourseCode(Integer semester);
 }
