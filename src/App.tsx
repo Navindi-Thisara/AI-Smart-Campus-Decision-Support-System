@@ -13,6 +13,7 @@ import StaffDashboard from './pages/StaffDashboard'
 
 import Dashboard from './pages/Dashboard'
 import Prediction from './pages/Prediction'
+import Eligibility from './pages/Eligibility'
 
 import './App.css'
 
@@ -115,6 +116,11 @@ function App() {
           <Route
             path="/prediction"
             element={<Prediction />}
+          />
+
+          <Route
+            path="/eligibility"
+            element={<Eligibility />}
           />
 
         </Route>

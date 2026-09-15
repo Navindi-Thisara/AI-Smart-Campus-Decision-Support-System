@@ -23,20 +23,21 @@ public interface CourseModuleRepository
      * course_modules.course_code
      */
     @Query("""
-        SELECT cm
-        FROM CourseModule cm
-        WHERE cm.semester = :semester
-        AND cm.courseCode IN (
-            SELECT dm.courseCode
-            FROM DegreeModule dm
-            WHERE dm.degreeId = :degreeId
-        )
-        ORDER BY cm.courseCode
-        """)
-    List<CourseModule> findModulesByDegreeAndSemester(
-            @Param("degreeId") String degreeId,
-            @Param("semester") Integer semester
-    );
+    SELECT cm
+    FROM CourseModule cm
+    WHERE cm.semester = :semester
+    AND cm.courseCode IN (
+        SELECT dm.courseCode
+        FROM DegreeModule dm
+        WHERE dm.degreeId = :degreeId
+        AND LOWER(dm.moduleType) = 'core'
+    )
+    ORDER BY cm.courseCode
+    """)
+List<CourseModule> findModulesByDegreeAndSemester(
+        @Param("degreeId") String degreeId,
+        @Param("semester") Integer semester
+);
 
     /**
      * Get all course modules for a specific semester,

@@ -1,0 +1,1681 @@
+/* =========================================================
+   ACADEMIC ELIGIBILITY
+   Rule-Based Expert System
+   KDU Academic Intelligence
+   Prediction Page Visual Theme
+   ========================================================= */
+
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.eligibility-page {
+  width: 100%;
+  max-width: none;
+
+  min-height: calc(100vh - 76px);
+
+  margin: 0;
+
+  padding: 32px 24px 48px 0;
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.eligibility-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 32px;
+
+  margin-bottom: 34px;
+}
+
+.eligibility-header > div:first-child {
+  min-width: 0;
+}
+
+.eligibility-eyebrow {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 8px;
+
+  margin-bottom: 12px;
+
+  color: var(--brand-secondary);
+
+  font-size: 0.72rem;
+  font-weight: 800;
+
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.eligibility-eyebrow::before {
+  content: "";
+
+  width: 28px;
+  height: 2px;
+
+  flex-shrink: 0;
+
+  background: var(--brand-accent);
+
+  border-radius: 999px;
+}
+
+.eligibility-header h1 {
+  margin: 0;
+
+  color: var(--color-text);
+
+  font-size: clamp(2.3rem, 4vw, 3.35rem);
+  font-weight: 800;
+
+  line-height: 1.05;
+
+  letter-spacing: -0.045em;
+}
+
+.eligibility-header h1 span {
+  color: var(--brand-primary);
+}
+
+.eligibility-header p {
+  max-width: 720px;
+
+  margin: 15px 0 0;
+
+  color: var(--color-text-secondary);
+
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+
+/* =========================================================
+   EXPERT SYSTEM BADGE
+   ========================================================= */
+
+.eligibility-ai-badge {
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  flex-shrink: 0;
+
+  min-width: 218px;
+
+  padding: 13px 16px;
+
+  box-sizing: border-box;
+
+  background: var(--color-surface);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+
+  box-shadow: var(--shadow-sm);
+}
+
+.eligibility-ai-badge > span {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--brand-primary),
+      var(--brand-secondary)
+    );
+
+  border-radius: 12px;
+
+  font-size: 0.78rem;
+  font-weight: 800;
+
+  box-shadow:
+    0 7px 18px rgba(18, 59, 115, 0.20);
+}
+
+.eligibility-ai-badge div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+
+  min-width: 0;
+}
+
+.eligibility-ai-badge strong {
+  color: var(--color-text);
+
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.eligibility-ai-badge small {
+  color: var(--color-text-muted);
+
+  font-size: 0.71rem;
+}
+
+
+/* =========================================================
+   MAIN GRID
+   ========================================================= */
+
+.eligibility-grid {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1.15fr)
+    minmax(360px, 0.85fr);
+
+  gap: 24px;
+
+  /*
+   * IMPORTANT:
+   * Prevent the left card from stretching
+   * to match the height of the right card.
+   */
+  align-items: start;
+}
+
+
+/* =========================================================
+   COMMON CARD
+   ========================================================= */
+
+.eligibility-card {
+  position: relative;
+
+  min-width: 0;
+
+  /*
+   * IMPORTANT:
+   * Keep each card at its natural content height.
+   */
+  align-self: start;
+
+  padding: 26px;
+
+  box-sizing: border-box;
+
+  background: var(--color-surface);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+
+  box-shadow: var(--shadow-md);
+
+  overflow: hidden;
+}
+
+.eligibility-card::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 3px;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--brand-primary),
+      var(--brand-secondary),
+      var(--brand-accent)
+    );
+}
+
+
+/* =========================================================
+   CARD HEADER
+   ========================================================= */
+
+.eligibility-card-header {
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  margin-bottom: 25px;
+}
+
+.eligibility-step-number {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  color: var(--brand-primary);
+
+  background: var(--color-info-bg);
+
+  border: 1px solid rgba(37, 99, 235, 0.14);
+  border-radius: 12px;
+
+  font-size: 0.72rem;
+  font-weight: 800;
+
+  letter-spacing: 0.04em;
+}
+
+.result-step {
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--brand-primary),
+      var(--brand-secondary)
+    );
+
+  border-color: transparent;
+
+  box-shadow:
+    0 7px 18px rgba(18, 59, 115, 0.18);
+}
+
+.eligibility-card-header h2 {
+  margin: 0;
+
+  color: var(--color-text);
+
+  font-size: 1.08rem;
+  font-weight: 750;
+
+  line-height: 1.3;
+}
+
+.eligibility-card-header p {
+  margin: 4px 0 0;
+
+  color: var(--color-text-muted);
+
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.eligibility-form {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 18px;
+}
+
+.eligibility-field {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+}
+
+.eligibility-field label {
+  margin-bottom: 8px;
+
+  color: var(--color-text);
+
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.eligibility-field input,
+.eligibility-field select {
+  width: 100%;
+  height: 48px;
+
+  padding: 0 14px;
+
+  box-sizing: border-box;
+
+  color: var(--color-text);
+
+  background: var(--color-surface-secondary);
+
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+
+  outline: none;
+
+  font-family: inherit;
+  font-size: 0.84rem;
+
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.eligibility-field input:hover,
+.eligibility-field select:hover {
+  border-color: var(--brand-secondary);
+}
+
+.eligibility-field input:focus,
+.eligibility-field select:focus {
+  background: var(--color-surface);
+
+  border-color: var(--brand-secondary);
+
+  box-shadow:
+    0 0 0 4px rgba(30, 90, 168, 0.10);
+}
+
+.eligibility-field input:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.72;
+}
+
+.eligibility-field small {
+  margin-top: 6px;
+
+  color: var(--color-text-muted);
+
+  font-size: 0.68rem;
+}
+
+
+/* =========================================================
+   SUBMIT BUTTON
+   ========================================================= */
+
+.eligibility-submit {
+  width: 100%;
+  min-height: 51px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 11px;
+
+  margin-top: 25px;
+
+  padding: 0 20px;
+
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--brand-primary),
+      var(--brand-secondary)
+    );
+
+  border: 0;
+  border-radius: 12px;
+
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 750;
+
+  box-shadow:
+    0 8px 20px rgba(18, 59, 115, 0.20);
+
+  cursor: pointer;
+
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
+    filter var(--transition-fast);
+}
+
+.eligibility-submit span {
+  font-size: 1.15rem;
+
+  transition:
+    transform var(--transition-fast);
+}
+
+.eligibility-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 12px 28px rgba(18, 59, 115, 0.28);
+
+  filter: brightness(1.04);
+}
+
+.eligibility-submit:hover:not(:disabled) span {
+  transform: translateX(4px);
+}
+
+.eligibility-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.eligibility-submit:disabled {
+  opacity: 0.65;
+
+  cursor: wait;
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.eligibility-error {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+
+  margin-top: 17px;
+
+  padding: 13px 15px;
+
+  background: var(--color-danger-bg);
+
+  border: 1px solid rgba(220, 38, 38, 0.15);
+  border-radius: 11px;
+
+  font-size: 0.76rem;
+}
+
+.eligibility-error strong {
+  color: var(--color-danger);
+
+  font-weight: 750;
+}
+
+.eligibility-error span {
+  color: var(--color-text-secondary);
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   RESULT PANEL
+   ========================================================= */
+
+.result-panel {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  align-self: start;
+}
+
+
+/* =========================================================
+   EMPTY RESULT
+   ========================================================= */
+
+.eligibility-empty {
+  /*
+   * IMPORTANT:
+   * Removed flex: 1.
+   * This prevents the empty result area from forcing
+   * the left card to become unnecessarily tall.
+   */
+  min-height: 330px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 30px;
+
+  text-align: center;
+}
+
+.eligibility-empty-icon {
+  width: 68px;
+  height: 68px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 17px;
+
+  color: var(--brand-secondary);
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--color-info-bg),
+      var(--color-surface-secondary)
+    );
+
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+
+  font-size: 1.65rem;
+
+  box-shadow: var(--shadow-sm);
+}
+
+.eligibility-empty h3 {
+  margin: 0;
+
+  color: var(--color-text);
+
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.eligibility-empty p {
+  max-width: 350px;
+
+  margin: 9px 0 18px;
+
+  color: var(--color-text-muted);
+
+  font-size: 0.81rem;
+  line-height: 1.65;
+}
+
+.eligibility-empty-line {
+  width: 46px;
+  height: 2px;
+
+  margin-bottom: 11px;
+
+  background: var(--brand-accent);
+
+  border-radius: 999px;
+}
+
+.eligibility-empty > span {
+  color: var(--color-text-light);
+
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   RESULT CONTENT
+   ========================================================= */
+
+.eligibility-result {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+
+  padding: 4px 0 0;
+}
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.eligibility-status {
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 16px;
+
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+}
+
+.eligibility-status-icon {
+  width: 45px;
+  height: 45px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.eligibility-status > div:last-child {
+  min-width: 0;
+}
+
+.eligibility-status > div:last-child span,
+.eligibility-status > div:last-child strong {
+  display: block;
+}
+
+.eligibility-status > div:last-child span {
+  margin-bottom: 3px;
+
+  color: var(--color-text-muted);
+
+  font-size: 0.68rem;
+}
+
+.eligibility-status > div:last-child strong {
+  font-size: 1.08rem;
+  line-height: 1.25;
+}
+
+
+/* =========================================================
+   ELIGIBLE STATUS
+   ========================================================= */
+
+.eligibility-status.eligible {
+  background: var(--color-success-bg);
+
+  border-color:
+    rgba(21, 128, 61, 0.15);
+}
+
+.eligibility-status.eligible
+.eligibility-status-icon {
+  color: var(--color-success);
+
+  background:
+    rgba(21, 128, 61, 0.10);
+}
+
+.eligibility-status.eligible strong {
+  color: var(--color-success);
+}
+
+
+/* =========================================================
+   NOT ELIGIBLE STATUS
+   ========================================================= */
+
+.eligibility-status.not-eligible {
+  background: var(--color-danger-bg);
+
+  border-color:
+    rgba(220, 38, 38, 0.15);
+}
+
+.eligibility-status.not-eligible
+.eligibility-status-icon {
+  color: var(--color-danger);
+
+  background:
+    rgba(220, 38, 38, 0.10);
+}
+
+.eligibility-status.not-eligible strong {
+  color: var(--color-danger);
+}
+
+
+/* =========================================================
+   CONDITIONAL STATUS
+   ========================================================= */
+
+.eligibility-status.conditional {
+  background:
+    rgba(245, 158, 11, 0.075);
+
+  border-color:
+    rgba(245, 158, 11, 0.18);
+}
+
+.eligibility-status.conditional
+.eligibility-status-icon {
+  color: #d97706;
+
+  background:
+    rgba(245, 158, 11, 0.10);
+}
+
+.eligibility-status.conditional strong {
+  color: #d97706;
+}
+
+
+/* =========================================================
+   DESCRIPTION
+   ========================================================= */
+
+.eligibility-description {
+  margin: 13px 1px 17px;
+
+  color: var(--color-text-secondary);
+
+  font-size: 0.77rem;
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   SUMMARY
+   ========================================================= */
+
+.eligibility-summary {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 9px;
+}
+
+.eligibility-summary > div {
+  min-width: 0;
+
+  padding: 13px;
+
+  background: var(--color-surface-secondary);
+
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+}
+
+.eligibility-summary span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: var(--color-text-muted);
+
+  font-size: 0.64rem;
+  font-weight: 600;
+}
+
+.eligibility-summary strong {
+  display: block;
+
+  color: var(--color-text);
+
+  font-size: 0.76rem;
+  font-weight: 750;
+
+  line-height: 1.35;
+
+  word-break: break-word;
+}
+
+
+/* =========================================================
+   EVALUATION DETAILS
+   ========================================================= */
+
+.eligibility-explanations {
+  margin-top: 19px;
+
+  min-width: 0;
+}
+
+.evaluation-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  margin-bottom: 13px;
+}
+
+.evaluation-heading h3 {
+  margin: 0;
+
+  color: var(--color-text);
+
+  font-size: 0.91rem;
+  font-weight: 750;
+}
+
+.evaluation-heading p {
+  margin: 4px 0 0;
+
+  color: var(--color-text-muted);
+
+  font-size: 0.68rem;
+  line-height: 1.45;
+}
+
+.evaluation-engine {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  min-height: 24px;
+
+  padding: 0 9px;
+
+  color: var(--brand-secondary);
+
+  background: var(--color-info-bg);
+
+  border: 1px solid rgba(37, 99, 235, 0.13);
+  border-radius: 999px;
+
+  font-size: 0.57rem;
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+}
+
+
+/* =========================================================
+   RULE CARD GRID
+   ========================================================= */
+
+.eligibility-rule-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 9px;
+
+  margin-bottom: 13px;
+}
+
+
+/* =========================================================
+   RULE CARD
+   ========================================================= */
+
+.eligibility-rule-card {
+  position: relative;
+
+  display: flex;
+  align-items: flex-start;
+
+  gap: 10px;
+
+  min-width: 0;
+  min-height: 94px;
+
+  padding: 12px;
+
+  box-sizing: border-box;
+
+  background: var(--color-surface-secondary);
+
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.eligibility-rule-card:hover {
+  transform: translateY(-1px);
+
+  box-shadow: var(--shadow-sm);
+}
+
+
+/* =========================================================
+   RULE CARD ICON
+   ========================================================= */
+
+.rule-card-icon {
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 9px;
+
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   RULE CARD CONTENT
+   ========================================================= */
+
+.rule-card-content {
+  flex: 1;
+
+  min-width: 0;
+}
+
+.rule-card-label {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color: var(--color-text-muted);
+
+  font-size: 0.55rem;
+  font-weight: 800;
+
+  letter-spacing: 0.08em;
+}
+
+.rule-card-content strong {
+  display: block;
+
+  color: var(--color-text);
+
+  font-size: 0.73rem;
+  font-weight: 750;
+
+  line-height: 1.3;
+}
+
+.rule-card-content p {
+  margin: 4px 0 0;
+
+  color: var(--color-text-muted);
+
+  font-size: 0.61rem;
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   RULE CARD STATUS
+   ========================================================= */
+
+.rule-card-status {
+  position: absolute;
+
+  right: 10px;
+  bottom: 9px;
+
+  font-size: 0.55rem;
+  font-weight: 750;
+}
+
+
+/* =========================================================
+   PASSED RULE CARD
+   ========================================================= */
+
+.eligibility-rule-card.rule-passed {
+  border-color:
+    rgba(21, 128, 61, 0.15);
+}
+
+.eligibility-rule-card.rule-passed
+.rule-card-icon {
+  color: var(--color-success);
+
+  background:
+    var(--color-success-bg);
+}
+
+.eligibility-rule-card.rule-passed
+.rule-card-status {
+  color: var(--color-success);
+}
+
+
+/* =========================================================
+   WARNING RULE CARD
+   ========================================================= */
+
+.eligibility-rule-card.rule-warning {
+  border-color:
+    rgba(245, 158, 11, 0.20);
+}
+
+.eligibility-rule-card.rule-warning
+.rule-card-icon {
+  color: #d97706;
+
+  background:
+    rgba(245, 158, 11, 0.10);
+}
+
+.eligibility-rule-card.rule-warning
+.rule-card-status {
+  color: #d97706;
+}
+
+
+/* =========================================================
+   FAILED RULE CARD
+   ========================================================= */
+
+.eligibility-rule-card.rule-failed {
+  border-color:
+    rgba(220, 38, 38, 0.17);
+}
+
+.eligibility-rule-card.rule-failed
+.rule-card-icon {
+  color: var(--color-danger);
+
+  background:
+    var(--color-danger-bg);
+}
+
+.eligibility-rule-card.rule-failed
+.rule-card-status {
+  color: var(--color-danger);
+}
+
+
+/* =========================================================
+   PENDING RULE CARD
+   ========================================================= */
+
+.eligibility-rule-card.rule-pending {
+  opacity: 0.72;
+}
+
+.eligibility-rule-card.rule-pending
+.rule-card-icon {
+  color: var(--color-text-muted);
+
+  background: var(--color-border);
+}
+
+.eligibility-rule-card.rule-pending
+.rule-card-status {
+  color: var(--color-text-muted);
+}
+
+
+/* =========================================================
+   DECISION EXPLANATION PANEL
+   ========================================================= */
+
+.eligibility-explanation-details {
+  overflow: hidden;
+
+  background: var(--color-surface);
+
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.explanation-details-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  padding: 10px 12px;
+
+  background: var(--color-surface-secondary);
+
+  border-bottom: 1px solid var(--color-border);
+}
+
+.explanation-details-header span {
+  color: var(--color-text);
+
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.explanation-details-header small {
+  color: var(--color-text-muted);
+
+  font-size: 0.57rem;
+}
+
+
+/* =========================================================
+   DETAILED EXPLANATION LIST
+   ========================================================= */
+
+.eligibility-explanation-details
+.eligibility-rules {
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+
+  max-height: 205px;
+
+  overflow-y: auto;
+
+  padding: 9px;
+}
+
+
+/* =========================================================
+   INDIVIDUAL EXPLANATION
+   ========================================================= */
+
+.eligibility-rule {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 8px;
+
+  padding: 8px 9px;
+
+  background: var(--color-surface-secondary);
+
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+
+  color: var(--color-text-secondary);
+
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+
+.eligibility-rule > span:last-child {
+  min-width: 0;
+}
+
+
+/* =========================================================
+   EXPLANATION ICON
+   ========================================================= */
+
+.rule-icon {
+  width: 19px;
+  height: 19px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  margin-top: 1px;
+
+  border-radius: 50%;
+
+  background: var(--color-border);
+
+  color: var(--color-text-muted);
+
+  font-size: 0.58rem;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   PASSED EXPLANATION
+   ========================================================= */
+
+.eligibility-rule.rule-passed {
+  border-color:
+    rgba(21, 128, 61, 0.14);
+}
+
+.eligibility-rule.rule-passed
+.rule-icon {
+  color: var(--color-success);
+
+  background:
+    var(--color-success-bg);
+}
+
+
+/* =========================================================
+   WARNING EXPLANATION
+   ========================================================= */
+
+.eligibility-rule.rule-warning {
+  border-color:
+    rgba(245, 158, 11, 0.17);
+}
+
+.eligibility-rule.rule-warning
+.rule-icon {
+  color: #d97706;
+
+  background:
+    rgba(245, 158, 11, 0.10);
+}
+
+
+/* =========================================================
+   INFORMATION SECTION
+   ========================================================= */
+
+.eligibility-information {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 24px;
+
+  margin-top: 22px;
+
+  padding: 18px 22px;
+
+  background: var(--color-surface);
+
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+
+  box-shadow: var(--shadow-sm);
+}
+
+.eligibility-information-main {
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  min-width: 0;
+}
+
+.eligibility-engine-icon {
+  width: 43px;
+  height: 43px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  color: #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--brand-primary),
+      var(--brand-secondary)
+    );
+
+  border-radius: 11px;
+
+  font-size: 0.68rem;
+  font-weight: 800;
+
+  box-shadow:
+    0 6px 15px rgba(18, 59, 115, 0.16);
+}
+
+.eligibility-information-main > div:last-child {
+  min-width: 0;
+}
+
+.eligibility-information-main strong {
+  display: block;
+
+  color: var(--color-text);
+
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.eligibility-information-main p {
+  max-width: 620px;
+
+  margin: 4px 0 0;
+
+  color: var(--color-text-muted);
+
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.eligibility-features {
+  display: flex;
+  flex-wrap: wrap;
+
+  justify-content: flex-end;
+
+  gap: 6px;
+
+  flex-shrink: 0;
+}
+
+.eligibility-features span {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 28px;
+
+  padding: 0 9px;
+
+  color: var(--color-text-secondary);
+
+  background: var(--color-surface-secondary);
+
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+
+  font-size: 0.59rem;
+  font-weight: 650;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   CUSTOM SCROLLBAR
+   ========================================================= */
+
+.eligibility-explanation-details
+.eligibility-rules::-webkit-scrollbar {
+  width: 5px;
+}
+
+.eligibility-explanation-details
+.eligibility-rules::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.eligibility-explanation-details
+.eligibility-rules::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+
+  border-radius: 999px;
+}
+
+.eligibility-explanation-details
+.eligibility-rules::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-secondary);
+}
+
+
+/* =========================================================
+   DARK MODE
+   ========================================================= */
+
+[data-theme="dark"] .eligibility-card,
+[data-theme="dark"] .eligibility-ai-badge,
+[data-theme="dark"] .eligibility-information {
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+[data-theme="dark"] .eligibility-submit {
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.30);
+}
+
+[data-theme="dark"]
+.eligibility-rule-card:hover {
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.18);
+}
+
+
+/* =========================================================
+   RESPONSIVE — 1200px
+   ========================================================= */
+
+@media (max-width: 1200px) {
+
+  .eligibility-grid {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, 1fr);
+
+    gap: 22px;
+  }
+
+  .eligibility-card {
+    padding: 23px;
+  }
+
+  .eligibility-rule-card {
+    min-height: 96px;
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — 1000px
+   ========================================================= */
+
+@media (max-width: 1000px) {
+
+  .eligibility-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .eligibility-ai-badge {
+    min-width: 230px;
+  }
+
+  .eligibility-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .result-panel {
+    min-height: 500px;
+  }
+
+  .eligibility-information {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .eligibility-features {
+    justify-content: flex-start;
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — 767px
+   ========================================================= */
+
+@media (max-width: 767px) {
+
+  .eligibility-page {
+    padding: 28px 16px 44px;
+  }
+
+  .eligibility-header {
+    gap: 19px;
+
+    margin-bottom: 24px;
+  }
+
+  .eligibility-header h1 {
+    font-size: 2.15rem;
+  }
+
+  .eligibility-header p {
+    margin-top: 11px;
+
+    font-size: 0.86rem;
+  }
+
+  .eligibility-ai-badge {
+    width: 100%;
+  }
+
+  .eligibility-card {
+    padding: 20px;
+
+    border-radius: 18px;
+  }
+
+  .eligibility-form {
+    grid-template-columns: 1fr;
+
+    gap: 15px;
+  }
+
+  .eligibility-card-header {
+    margin-bottom: 21px;
+  }
+
+  .eligibility-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .eligibility-rule-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .eligibility-explanation-details
+  .eligibility-rules {
+    max-height: 260px;
+  }
+
+  .evaluation-heading {
+    align-items: flex-start;
+  }
+
+  .eligibility-information {
+    padding: 17px;
+  }
+
+  .eligibility-features {
+    width: 100%;
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — 520px
+   ========================================================= */
+
+@media (max-width: 520px) {
+
+  .eligibility-page {
+    padding: 24px 12px 36px;
+  }
+
+  .eligibility-header h1 {
+    font-size: 1.85rem;
+  }
+
+  .eligibility-card {
+    padding: 17px;
+  }
+
+  .eligibility-status {
+    padding: 14px;
+  }
+
+  .eligibility-status-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .eligibility-status > div:last-child strong {
+    font-size: 0.98rem;
+  }
+
+  .evaluation-heading {
+    flex-direction: column;
+
+    gap: 8px;
+  }
+
+  .evaluation-engine {
+    align-self: flex-start;
+  }
+
+  .explanation-details-header {
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 4px;
+  }
+
+  .eligibility-information-main {
+    align-items: flex-start;
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — 400px
+   ========================================================= */
+
+@media (max-width: 400px) {
+
+  .eligibility-page {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .eligibility-card {
+    padding: 15px;
+  }
+
+  .eligibility-header h1 {
+    font-size: 1.65rem;
+  }
+
+  .eligibility-ai-badge {
+    padding: 11px;
+  }
+
+  .eligibility-ai-badge > span {
+    width: 39px;
+    height: 39px;
+  }
+
+  .eligibility-submit {
+    min-height: 49px;
+
+    font-size: 0.79rem;
+  }
+
+  .eligibility-rule-card {
+    padding: 11px;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .eligibility-submit,
+  .eligibility-submit span,
+  .eligibility-field input,
+  .eligibility-field select,
+  .eligibility-rule-card {
+    transition: none;
+  }
+
+}
