@@ -11,7 +11,6 @@ import {
 
 import './Navbar.css'
 
-
 const NAV_ITEMS = [
   {
     id: 'home',
@@ -29,6 +28,41 @@ const NAV_ITEMS = [
     id: 'contact',
     label: 'Contact',
   },
+]
+
+const AI_NAV_ITEMS = [
+  {
+    id: 'home',
+    label: 'Home',
+    path: '/',
+  },
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    path: '/student-dashboard',
+  },
+  {
+    id: 'prediction',
+    label: 'Prediction',
+    path: '/prediction',
+  },
+  {
+    id: 'study-plan',
+    label: 'Study Plan',
+    path: '/study-plan',
+  },
+  {
+    id: 'eligibility',
+    label: 'Eligibility',
+    path: '/eligibility',
+  },
+]
+
+const AI_SERVICE_PATHS = [
+  '/student-dashboard',
+  '/prediction',
+  '/study-plan',
+  '/eligibility',
 ]
 
 
@@ -57,6 +91,12 @@ function Navbar() {
   const location = useLocation()
   const navigate = useNavigate()
 
+  const isAIServicePage =
+    AI_SERVICE_PATHS.includes(
+      location.pathname,
+    )
+
+
   useEffect(() => {
 
     const checkAuthentication = () => {
@@ -77,6 +117,7 @@ function Navbar() {
 
     checkAuthentication()
 
+
     window.addEventListener(
       'storage',
       checkAuthentication,
@@ -86,6 +127,7 @@ function Navbar() {
       'auth-changed',
       checkAuthentication,
     )
+
 
     return () => {
 
@@ -112,10 +154,12 @@ function Navbar() {
         ? 'dark'
         : 'light'
 
+
     document.documentElement.setAttribute(
       'data-theme',
       theme,
     )
+
 
     setDarkMode(
       theme === 'dark',
@@ -197,9 +241,13 @@ function Navbar() {
 
   }, [])
 
+
   useEffect(() => {
 
-    if (location.pathname !== '/') {
+    if (
+      isAIServicePage ||
+      location.pathname !== '/'
+    ) {
 
       setActiveSection('')
 
@@ -314,7 +362,10 @@ function Navbar() {
       )
     }
 
-  }, [location.pathname])
+  }, [
+    location.pathname,
+    isAIServicePage,
+  ])
 
   useEffect(() => {
 
@@ -380,6 +431,7 @@ function Navbar() {
 
 
     if (location.pathname !== '/') {
+
       return
     }
 
@@ -420,7 +472,6 @@ function Navbar() {
     )
   }
 
-
   const handleBrandClick = () => {
 
     closeMobileMenu()
@@ -456,6 +507,7 @@ function Navbar() {
 
     closeMobileMenu()
 
+
     window.dispatchEvent(
       new Event('auth-changed'),
     )
@@ -485,6 +537,7 @@ function Navbar() {
     }`
   }
 
+
   const getMobileNavLinkClass = (
     id: string,
   ) => {
@@ -492,6 +545,37 @@ function Navbar() {
     const isActive =
       location.pathname === '/' &&
       activeSection === id
+
+
+    return `mobile-nav-link ${
+      isActive
+        ? 'active'
+        : ''
+    }`
+  }
+
+  const getAIServiceLinkClass = (
+    path: string,
+  ) => {
+
+    const isActive =
+      location.pathname === path
+
+
+    return `navbar-link ${
+      isActive
+        ? 'active'
+        : ''
+    }`
+  }
+
+
+  const getMobileAIServiceLinkClass = (
+    path: string,
+  ) => {
+
+    const isActive =
+      location.pathname === path
 
 
     return `mobile-nav-link ${
@@ -553,28 +637,55 @@ function Navbar() {
           aria-label="Primary navigation"
         >
 
-          {NAV_ITEMS.map(
-            (item) => (
+          {isAIServicePage ? (
 
-              <a
-                key={item.id}
-                href={`/#${item.id}`}
-                className={
-                  getNavLinkClass(
-                    item.id,
-                  )
-                }
-                onClick={(event) =>
-                  handleNavClick(
-                    event,
-                    item.id,
-                  )
-                }
-              >
-                {item.label}
-              </a>
+            AI_NAV_ITEMS.map(
+              (item) => (
 
-            ),
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  className={
+                    getAIServiceLinkClass(
+                      item.path,
+                    )
+                  }
+                  onClick={
+                    closeMobileMenu
+                  }
+                >
+                  {item.label}
+                </Link>
+
+              ),
+            )
+
+          ) : (
+
+            NAV_ITEMS.map(
+              (item) => (
+
+                <a
+                  key={item.id}
+                  href={`/#${item.id}`}
+                  className={
+                    getNavLinkClass(
+                      item.id,
+                    )
+                  }
+                  onClick={(event) =>
+                    handleNavClick(
+                      event,
+                      item.id,
+                    )
+                  }
+                >
+                  {item.label}
+                </a>
+
+              ),
+            )
+
           )}
 
         </nav>
@@ -686,7 +797,7 @@ function Navbar() {
                 />
 
                 <path
-                  d="M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"
+                  d="M14 4h5a2 2 0 0 1-2 2v12a2 2 0 0 1-2 2h-5"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
@@ -794,29 +905,56 @@ function Navbar() {
           aria-label="Mobile navigation"
         >
 
+          {isAIServicePage ? (
 
-          {NAV_ITEMS.map(
-            (item) => (
+            AI_NAV_ITEMS.map(
+              (item) => (
 
-              <a
-                key={item.id}
-                href={`/#${item.id}`}
-                className={
-                  getMobileNavLinkClass(
-                    item.id,
-                  )
-                }
-                onClick={(event) =>
-                  handleNavClick(
-                    event,
-                    item.id,
-                  )
-                }
-              >
-                {item.label}
-              </a>
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  className={
+                    getMobileAIServiceLinkClass(
+                      item.path,
+                    )
+                  }
+                  onClick={
+                    closeMobileMenu
+                  }
+                >
+                  {item.label}
+                </Link>
 
-            ),
+              ),
+            )
+
+          ) : (
+
+            NAV_ITEMS.map(
+              (item) => (
+
+                <a
+                  key={item.id}
+                  href={`/#${item.id}`}
+                  className={
+                    getMobileNavLinkClass(
+                      item.id,
+                    )
+                  }
+                  onClick={(event) =>
+                    handleNavClick(
+                      event,
+                      item.id,
+                    )
+                  }
+                >
+                  {item.label}
+                </a>
+
+              )
+
+            )
+
           )}
 
 
@@ -892,7 +1030,7 @@ function Navbar() {
                 />
 
                 <path
-                  d="M14 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"
+                  d="M14 4h5a2 2 0 0 1-2 2v12a2 2 0 0 1-2 2h-5"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
