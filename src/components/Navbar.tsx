@@ -797,7 +797,7 @@ function Navbar() {
                 />
 
                 <path
-                  d="M14 4h5a2 2 0 0 1-2 2v12a2 2 0 0 1-2 2h-5"
+                  d="M14 5V4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2v-1"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
@@ -1030,7 +1030,7 @@ function Navbar() {
                 />
 
                 <path
-                  d="M14 4h5a2 2 0 0 1-2 2v12a2 2 0 0 1-2 2h-5"
+                  d="M14 5V4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2v-1"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
