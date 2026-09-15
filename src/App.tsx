@@ -14,6 +14,7 @@ import StaffDashboard from './pages/StaffDashboard'
 import Dashboard from './pages/Dashboard'
 import Prediction from './pages/Prediction'
 import Eligibility from './pages/Eligibility'
+import StudyPlan from './pages/StudyPlan'
 
 import './App.css'
 
@@ -123,6 +124,11 @@ function App() {
             element={<Eligibility />}
           />
 
+          <Route
+            path="/study-plan"
+            element={<StudyPlan />}
+          />
+          
         </Route>
 
 
