@@ -11,6 +11,7 @@ import {
 
 import './Navbar.css'
 
+
 const NAV_ITEMS = [
   {
     id: 'home',
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
     label: 'Contact',
   },
 ]
+
 
 const AI_NAV_ITEMS = [
   {
@@ -58,12 +60,19 @@ const AI_NAV_ITEMS = [
   },
 ]
 
+
 const AI_SERVICE_PATHS = [
   '/student-dashboard',
   '/prediction',
   '/study-plan',
   '/eligibility',
 ]
+
+
+/*
+ * Staff dashboard route
+ */
+const STAFF_DASHBOARD_PATH = '/staff-dashboard'
 
 
 const NAVBAR_OFFSET = 80
@@ -80,6 +89,9 @@ function Navbar() {
   const [isAuthenticated, setIsAuthenticated] =
     useState(false)
 
+  const [userRole, setUserRole] =
+    useState('')
+
   const [darkMode, setDarkMode] =
     useState(
       () =>
@@ -91,11 +103,38 @@ function Navbar() {
   const location = useLocation()
   const navigate = useNavigate()
 
+
+  /*
+   * ============================================================
+   * ROUTE / ROLE HELPERS
+   * ============================================================
+   */
+
+  const isStaffDashboard =
+    location.pathname === STAFF_DASHBOARD_PATH
+
   const isAIServicePage =
     AI_SERVICE_PATHS.includes(
       location.pathname,
     )
 
+
+  const isStaff =
+    userRole === 'STAFF' ||
+    userRole === 'ROLE_STAFF' ||
+    userRole === 'staff'
+
+  const isStudent =
+    userRole === 'STUDENT' ||
+    userRole === 'ROLE_STUDENT' ||
+    userRole === 'student'
+
+
+  /*
+   * ============================================================
+   * AUTHENTICATION
+   * ============================================================
+   */
 
   useEffect(() => {
 
@@ -106,12 +145,41 @@ function Navbar() {
           'isAuthenticated',
         ) === 'true'
 
+
       const storedUser =
         localStorage.getItem('user')
+
 
       setIsAuthenticated(
         authenticated && !!storedUser,
       )
+
+
+      if (storedUser) {
+
+        try {
+
+          const user =
+            JSON.parse(storedUser)
+
+          setUserRole(
+            String(
+              user?.role ?? '',
+            ),
+          )
+
+        } catch {
+
+          setUserRole('')
+
+        }
+
+      } else {
+
+        setUserRole('')
+
+      }
+
     }
 
 
@@ -140,6 +208,7 @@ function Navbar() {
         'auth-changed',
         checkAuthentication,
       )
+
     }
 
   }, [location.pathname])
@@ -148,6 +217,7 @@ function Navbar() {
 
     const savedTheme =
       localStorage.getItem('kdu-theme')
+
 
     const theme =
       savedTheme === 'dark'
@@ -191,6 +261,7 @@ function Navbar() {
     setDarkMode(
       nextTheme === 'dark',
     )
+
   }
 
   const closeMobileMenu = () => {
@@ -222,6 +293,7 @@ function Navbar() {
       if (event.key === 'Escape') {
         closeMobileMenu()
       }
+
     }
 
 
@@ -237,14 +309,15 @@ function Navbar() {
         'keydown',
         handleEscape,
       )
+
     }
 
   }, [])
 
-
   useEffect(() => {
 
     if (
+      isStaffDashboard ||
       isAIServicePage ||
       location.pathname !== '/'
     ) {
@@ -321,13 +394,16 @@ function Navbar() {
         } else {
 
           break
+
         }
+
       }
 
 
       setActiveSection(
         currentSection,
       )
+
     }
 
 
@@ -360,11 +436,13 @@ function Navbar() {
         'resize',
         updateActiveSection,
       )
+
     }
 
   }, [
     location.pathname,
     isAIServicePage,
+    isStaffDashboard,
   ])
 
   useEffect(() => {
@@ -431,7 +509,6 @@ function Navbar() {
 
 
     if (location.pathname !== '/') {
-
       return
     }
 
@@ -470,6 +547,7 @@ function Navbar() {
         replace: true,
       },
     )
+
   }
 
   const handleBrandClick = () => {
@@ -488,10 +566,12 @@ function Navbar() {
       setActiveSection('home')
 
       return
+
     }
 
 
     setActiveSection('')
+
   }
 
   const handleLogout = () => {
@@ -504,6 +584,8 @@ function Navbar() {
 
 
     setIsAuthenticated(false)
+    setUserRole('')
+
 
     closeMobileMenu()
 
@@ -519,6 +601,7 @@ function Navbar() {
         replace: true,
       },
     )
+
   }
 
   const getNavLinkClass = (
@@ -535,6 +618,7 @@ function Navbar() {
         ? 'active'
         : ''
     }`
+
   }
 
 
@@ -552,7 +636,9 @@ function Navbar() {
         ? 'active'
         : ''
     }`
+
   }
+
 
   const getAIServiceLinkClass = (
     path: string,
@@ -567,6 +653,7 @@ function Navbar() {
         ? 'active'
         : ''
     }`
+
   }
 
 
@@ -583,17 +670,14 @@ function Navbar() {
         ? 'active'
         : ''
     }`
+
   }
 
   return (
+
     <header className="navbar">
 
       <div className="navbar-container">
-
-
-        {/* =================================================
-            BRAND
-            ================================================= */}
 
         <Link
           to="/"
@@ -627,17 +711,47 @@ function Navbar() {
 
         </Link>
 
-
-        {/* =================================================
-            DESKTOP NAVIGATION
-            ================================================= */}
-
         <nav
           className="navbar-links"
           aria-label="Primary navigation"
         >
 
-          {isAIServicePage ? (
+          {isStaffDashboard ? (
+
+            <>
+
+              {/* HOME TAB */}
+
+              <Link
+                to="/"
+                className="navbar-link"
+                onClick={
+                  closeMobileMenu
+                }
+              >
+                Home
+              </Link>
+
+
+              {/* DASHBOARD TAB */}
+
+              <Link
+                to={STAFF_DASHBOARD_PATH}
+                className={
+                  getAIServiceLinkClass(
+                    STAFF_DASHBOARD_PATH,
+                  )
+                }
+                onClick={
+                  closeMobileMenu
+                }
+              >
+                Dashboard
+              </Link>
+
+            </>
+
+          ) : isAIServicePage ? (
 
             AI_NAV_ITEMS.map(
               (item) => (
@@ -658,6 +772,7 @@ function Navbar() {
                 </Link>
 
               ),
+
             )
 
           ) : (
@@ -684,21 +799,56 @@ function Navbar() {
                 </a>
 
               ),
+
             )
 
           )}
 
+          {!isStaffDashboard &&
+            location.pathname === '/' &&
+            isAuthenticated &&
+            isStaff && (
+
+              <Link
+                to={STAFF_DASHBOARD_PATH}
+                className={
+                  getAIServiceLinkClass(
+                    STAFF_DASHBOARD_PATH,
+                  )
+                }
+                onClick={
+                  closeMobileMenu
+                }
+              >
+                Staff Dashboard
+              </Link>
+
+            )}
+
+          {!isStaffDashboard &&
+            location.pathname === '/' &&
+            isAuthenticated &&
+            isStudent && (
+
+              <Link
+                to="/student-dashboard"
+                className={
+                  getAIServiceLinkClass(
+                    '/student-dashboard',
+                  )
+                }
+                onClick={
+                  closeMobileMenu
+                }
+              >
+                Student Dashboard
+              </Link>
+
+            )}
+
         </nav>
 
-
-        {/* =================================================
-            DESKTOP ACTIONS
-            ================================================= */}
-
         <div className="navbar-actions">
-
-
-          {/* THEME */}
 
           <button
             type="button"
@@ -733,11 +883,6 @@ function Navbar() {
 
           </button>
 
-
-          {/* =================================================
-              LOGGED OUT
-              ================================================= */}
-
           {!isAuthenticated && (
 
             <>
@@ -760,11 +905,6 @@ function Navbar() {
             </>
 
           )}
-
-
-          {/* =================================================
-              LOGGED IN
-              ================================================= */}
 
           {isAuthenticated && (
 
@@ -816,11 +956,6 @@ function Navbar() {
           )}
 
         </div>
-
-
-        {/* =================================================
-            MOBILE ACTIONS
-            ================================================= */}
 
         <div className="mobile-actions">
 
@@ -887,10 +1022,6 @@ function Navbar() {
       </div>
 
 
-      {/* =====================================================
-          MOBILE MENU
-          ===================================================== */}
-
       <div
         id="mobile-menu"
         className={`mobile-menu ${
@@ -905,7 +1036,42 @@ function Navbar() {
           aria-label="Mobile navigation"
         >
 
-          {isAIServicePage ? (
+          {isStaffDashboard ? (
+
+            <>
+
+              {/* HOME */}
+
+              <Link
+                to="/"
+                className="mobile-nav-link"
+                onClick={
+                  closeMobileMenu
+                }
+              >
+                Home
+              </Link>
+
+
+              {/* DASHBOARD */}
+
+              <Link
+                to={STAFF_DASHBOARD_PATH}
+                className={
+                  getMobileAIServiceLinkClass(
+                    STAFF_DASHBOARD_PATH,
+                  )
+                }
+                onClick={
+                  closeMobileMenu
+                }
+              >
+                Dashboard
+              </Link>
+
+            </>
+
+          ) : isAIServicePage ? (
 
             AI_NAV_ITEMS.map(
               (item) => (
@@ -926,6 +1092,7 @@ function Navbar() {
                 </Link>
 
               ),
+
             )
 
           ) : (
@@ -951,19 +1118,56 @@ function Navbar() {
                   {item.label}
                 </a>
 
-              )
+              ),
 
             )
 
           )}
 
+          {!isStaffDashboard &&
+            location.pathname === '/' &&
+            isAuthenticated &&
+            isStaff && (
+
+              <Link
+                to={STAFF_DASHBOARD_PATH}
+                className={
+                  getMobileAIServiceLinkClass(
+                    STAFF_DASHBOARD_PATH,
+                  )
+                }
+                onClick={
+                  closeMobileMenu
+                }
+              >
+                Staff Dashboard
+              </Link>
+
+            )}
+
+          {!isStaffDashboard &&
+            location.pathname === '/' &&
+            isAuthenticated &&
+            isStudent && (
+
+              <Link
+                to="/student-dashboard"
+                className={
+                  getMobileAIServiceLinkClass(
+                    '/student-dashboard',
+                  )
+                }
+                onClick={
+                  closeMobileMenu
+                }
+              >
+                Student Dashboard
+              </Link>
+
+            )}
+
 
           <div className="mobile-menu-divider" />
-
-
-          {/* =================================================
-              MOBILE LOGGED OUT
-              ================================================= */}
 
           {!isAuthenticated && (
 
@@ -993,11 +1197,6 @@ function Navbar() {
             </>
 
           )}
-
-
-          {/* =================================================
-              MOBILE LOGGED IN
-              ================================================= */}
 
           {isAuthenticated && (
 
@@ -1053,7 +1252,9 @@ function Navbar() {
       </div>
 
     </header>
+
   )
 }
+
 
 export default Navbar

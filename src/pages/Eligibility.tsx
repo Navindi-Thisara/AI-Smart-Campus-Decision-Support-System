@@ -1,10 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import './Eligibility.css'
 
 const BACKEND_URL = 'http://localhost:8080'
 
-const STUDENT_ID = 'KDU/BSE/25/0001'
+interface LoggedInUser {
+  studentId?: string
+  registrationNo?: string
+  name?: string
+  role?: string
+}
 
 interface EligibilityResponse {
   studentId: string
@@ -18,6 +23,8 @@ interface EligibilityResponse {
 }
 
 function Eligibility() {
+  const [studentId, setStudentId] = useState('')
+
   const [semester, setSemester] = useState('2')
 
   const [result, setResult] =
@@ -25,12 +32,56 @@ function Eligibility() {
 
   const [loading, setLoading] = useState(false)
 
+  const [loadingUser, setLoadingUser] = useState(true)
+
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('user')
+
+      if (!storedUser) {
+        setError(
+          'No logged-in student was found. Please log in again.'
+        )
+        return
+      }
+
+      const user: LoggedInUser = JSON.parse(storedUser)
+
+      if (!user.studentId) {
+        setError(
+          'Student ID is not available for the logged-in user.'
+        )
+        return
+      }
+
+      setStudentId(user.studentId)
+    } catch (err) {
+      console.error(
+        'Failed to load logged-in user:',
+        err
+      )
+
+      setError(
+        'Unable to load the logged-in student information.'
+      )
+    } finally {
+      setLoadingUser(false)
+    }
+  }, [])
 
   const checkEligibility = async (
     e: React.FormEvent
   ) => {
     e.preventDefault()
+
+    if (!studentId) {
+      setError(
+        'Student ID is not available. Please log in again.'
+      )
+      return
+    }
 
     setLoading(true)
     setError('')
@@ -39,11 +90,22 @@ function Eligibility() {
     try {
       const response = await fetch(
         `${BACKEND_URL}/api/eligibility?studentId=${encodeURIComponent(
-          STUDENT_ID
+          studentId
         )}&semester=${semester}`
       )
 
-      const data = await response.json()
+      let data: EligibilityResponse & {
+        message?: string
+        error?: string
+      }
+
+      try {
+        data = await response.json()
+      } catch {
+        throw new Error(
+          'The eligibility service returned an invalid response.'
+        )
+      }
 
       if (!response.ok) {
         throw new Error(
@@ -124,13 +186,6 @@ function Eligibility() {
     }
   }
 
-  /*
-   * =========================================================
-   * RULE STATUS
-   * Determines the result of each individual expert-system rule.
-   * =========================================================
-   */
-
   const getRuleStatus = (
     rule:
       | 'profile'
@@ -201,10 +256,6 @@ function Eligibility() {
   return (
     <main className="eligibility-page">
 
-      {/* =====================================================
-          HEADER
-          ===================================================== */}
-
       <section className="eligibility-header">
 
         <div>
@@ -227,7 +278,6 @@ function Eligibility() {
 
         </div>
 
-
         <div className="eligibility-ai-badge">
 
           <span>ES</span>
@@ -248,16 +298,7 @@ function Eligibility() {
 
       </section>
 
-
-      {/* =====================================================
-          MAIN GRID
-          ===================================================== */}
-
       <section className="eligibility-grid">
-
-        {/* ===================================================
-            INPUT CARD
-            =================================================== */}
 
         <div className="eligibility-card">
 
@@ -281,7 +322,6 @@ function Eligibility() {
 
           </div>
 
-
           <form onSubmit={checkEligibility}>
 
             <div className="eligibility-form">
@@ -297,8 +337,13 @@ function Eligibility() {
                 <input
                   id="studentId"
                   type="text"
-                  value={STUDENT_ID}
+                  value={
+                    loadingUser
+                      ? 'Loading...'
+                      : studentId
+                  }
                   disabled
+                  readOnly
                 />
 
                 <small>
@@ -306,7 +351,6 @@ function Eligibility() {
                 </small>
 
               </div>
-
 
               {/* SEMESTER */}
 
@@ -322,6 +366,7 @@ function Eligibility() {
                   onChange={(e) =>
                     setSemester(e.target.value)
                   }
+                  disabled={loadingUser || loading}
                 >
 
                   {Array.from(
@@ -346,13 +391,16 @@ function Eligibility() {
 
             </div>
 
-
             {/* SUBMIT BUTTON */}
 
             <button
               type="submit"
               className="eligibility-submit"
-              disabled={loading}
+              disabled={
+                loading ||
+                loadingUser ||
+                !studentId
+              }
             >
 
               {loading
@@ -368,7 +416,6 @@ function Eligibility() {
             </button>
 
           </form>
-
 
           {/* ERROR */}
 
@@ -387,11 +434,6 @@ function Eligibility() {
           )}
 
         </div>
-
-
-        {/* ===================================================
-            RESULT CARD
-            =================================================== */}
 
         <div className="eligibility-card result-panel">
 
@@ -414,11 +456,6 @@ function Eligibility() {
             </div>
 
           </div>
-
-
-          {/* =================================================
-              EMPTY STATE
-              ================================================= */}
 
           {!result ? (
 
@@ -450,10 +487,6 @@ function Eligibility() {
 
             <div className="eligibility-result">
 
-              {/* =================================================
-                  STATUS
-                  ================================================= */}
-
               <div
                 className={`eligibility-status ${getStatusClass()}`}
               >
@@ -480,19 +513,9 @@ function Eligibility() {
 
               </div>
 
-
-              {/* =================================================
-                  DESCRIPTION
-                  ================================================= */}
-
               <p className="eligibility-description">
                 {getStatusDescription()}
               </p>
-
-
-              {/* =================================================
-                  SUMMARY
-                  ================================================= */}
 
               <div className="eligibility-summary">
 
@@ -508,7 +531,6 @@ function Eligibility() {
 
                 </div>
 
-
                 <div>
 
                   <span>
@@ -520,7 +542,6 @@ function Eligibility() {
                   </strong>
 
                 </div>
-
 
                 <div>
 
@@ -537,11 +558,6 @@ function Eligibility() {
                 </div>
 
               </div>
-
-
-              {/* =================================================
-                  EVALUATION DETAILS
-                  ================================================= */}
 
               <div className="eligibility-explanations">
 
@@ -566,11 +582,6 @@ function Eligibility() {
 
                 </div>
 
-
-                {/* =================================================
-                    RULE CARDS
-                    ================================================= */}
-
                 <div className="eligibility-rule-grid">
 
                   {/* RULE 01 - PROFILE */}
@@ -590,7 +601,6 @@ function Eligibility() {
 
                     </div>
 
-
                     <div className="rule-card-content">
 
                       <span className="rule-card-label">
@@ -608,7 +618,6 @@ function Eligibility() {
 
                     </div>
 
-
                     <span className="rule-card-status">
 
                       {getRuleStatus('profile') ===
@@ -619,7 +628,6 @@ function Eligibility() {
                     </span>
 
                   </div>
-
 
                   {/* RULE 02 - ATTENDANCE */}
 
@@ -638,7 +646,6 @@ function Eligibility() {
 
                     </div>
 
-
                     <div className="rule-card-content">
 
                       <span className="rule-card-label">
@@ -656,7 +663,6 @@ function Eligibility() {
 
                     </div>
 
-
                     <span className="rule-card-status">
 
                       {getRuleStatus('attendance') ===
@@ -667,7 +673,6 @@ function Eligibility() {
                     </span>
 
                   </div>
-
 
                   {/* RULE 03 - FEE */}
 
@@ -686,7 +691,6 @@ function Eligibility() {
 
                     </div>
 
-
                     <div className="rule-card-content">
 
                       <span className="rule-card-label">
@@ -704,7 +708,6 @@ function Eligibility() {
 
                     </div>
 
-
                     <span className="rule-card-status">
 
                       {getRuleStatus('fee') ===
@@ -715,7 +718,6 @@ function Eligibility() {
                     </span>
 
                   </div>
-
 
                   {/* RULE 04 - PREVIOUS MODULES */}
 
@@ -733,7 +735,6 @@ function Eligibility() {
                         : '!'}
 
                     </div>
-
 
                     <div className="rule-card-content">
 
@@ -753,7 +754,6 @@ function Eligibility() {
 
                     </div>
 
-
                     <span className="rule-card-status">
 
                       {getRuleStatus('modules') ===
@@ -769,11 +769,6 @@ function Eligibility() {
                   </div>
 
                 </div>
-
-
-                {/* =================================================
-                    DETAILED EXPLANATIONS
-                    ================================================= */}
 
                 <div className="eligibility-explanation-details">
 
@@ -793,7 +788,6 @@ function Eligibility() {
                     </small>
 
                   </div>
-
 
                   <div className="eligibility-rules">
 
@@ -876,11 +870,6 @@ function Eligibility() {
 
       </section>
 
-
-      {/* =====================================================
-          RULE INFORMATION
-          ===================================================== */}
-
       <section className="eligibility-information">
 
         <div className="eligibility-information-main">
@@ -904,7 +893,6 @@ function Eligibility() {
           </div>
 
         </div>
-
 
         <div className="eligibility-features">
 

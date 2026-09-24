@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react'
+
 import './Prediction.css'
 
 const API_URL = 'http://127.0.0.1:8000'
-
 const BACKEND_URL = 'http://localhost:8080'
-const STUDENT_ID = 'KDU/BSE/25/0001'
+
+interface LoggedInUser {
+  id: number
+  fullName: string
+  email: string
+  studentId: string
+  role: 'STUDENT' | 'STAFF'
+}
 
 interface PredictionForm {
   Previous_SGPA: string
@@ -12,6 +19,41 @@ interface PredictionForm {
   Repeated_Courses: string
   Current_Year: string
   Current_Semester: string
+}
+
+interface SemesterRecord {
+  semester: number
+  sgpa: number
+}
+
+interface StudentProfile {
+  currentYear: number
+  currentSemester: number
+}
+
+interface StudentDashboardResponse {
+  profile: StudentProfile
+  semesterRecords: SemesterRecord[]
+}
+
+function getLoggedInUser(): LoggedInUser | null {
+  const storedUser = localStorage.getItem('user')
+
+  if (!storedUser) {
+    return null
+  }
+
+  try {
+    const user: LoggedInUser = JSON.parse(storedUser)
+
+    if (!user.studentId) {
+      return null
+    }
+
+    return user
+  } catch {
+    return null
+  }
 }
 
 function Prediction() {
@@ -23,94 +65,125 @@ function Prediction() {
     Current_Semester: '',
   })
 
-  useEffect(() => {
-  const loadStudentData = async () => {
-    try {
-      setError('')
-
-      const response = await fetch(
-        `${BACKEND_URL}/api/students/dashboard?studentId=${encodeURIComponent(STUDENT_ID)}`
-      )
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(
-          typeof data.detail === 'string'
-            ? data.detail
-            : 'Failed to load student data.'
-        )
-      }
-
-      console.log('Student data:', data)
-
-      const records = data.semesterRecords || []
-
-      if (records.length === 0) {
-        throw new Error(
-          'No saved SGPA records found.'
-        )
-      }
-
-      const sortedRecords = [...records].sort(
-        (a, b) => a.semester - b.semester
-      )
-
-      const latest =
-        sortedRecords[sortedRecords.length - 1]
-
-      const previous =
-        sortedRecords.length > 1
-          ? sortedRecords[sortedRecords.length - 2]
-          : null
-
-      setForm((previousForm) => ({
-        ...previousForm,
-
-        Previous_SGPA: previous
-          ? Number(previous.sgpa).toFixed(4)
-          : Number(latest.sgpa).toFixed(4),
-
-        Current_SGPA: Number(latest.sgpa).toFixed(4),
-
-        Current_Year: String(
-          data.profile.currentYear
-        ),
-
-        Current_Semester: String(
-          data.profile.currentSemester
-        ),
-
-        Repeated_Courses: '0',
-      }))
-    } catch (err) {
-      console.error(
-        'Failed to load student data:',
-        err
-      )
-
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Unable to load student data.'
-      )
-    }
-  }
-
-  loadStudentData()
-}, [])
-
   const [prediction, setPrediction] = useState<number | null>(null)
+
   const [loading, setLoading] = useState(false)
+
   const [error, setError] = useState('')
 
+  const [loadingStudentData, setLoadingStudentData] =
+    useState(true)
+
+  useEffect(() => {
+    const loadStudentData = async () => {
+      setLoadingStudentData(true)
+      setError('')
+
+      try {
+        const loggedInUser = getLoggedInUser()
+
+        if (!loggedInUser) {
+          throw new Error(
+            'Unable to identify the logged-in student. Please log in again.'
+          )
+        }
+
+        const response = await fetch(
+          `${BACKEND_URL}/api/students/dashboard?studentId=${encodeURIComponent(
+            loggedInUser.studentId
+          )}`
+        )
+
+        const data: StudentDashboardResponse & {
+          detail?: string
+          message?: string
+        } = await response.json()
+
+        if (!response.ok) {
+          throw new Error(
+            data.detail ||
+              data.message ||
+              'Failed to load student data.'
+          )
+        }
+
+        console.log('Student data:', data)
+
+        const records = data.semesterRecords || []
+
+        if (records.length === 0) {
+          throw new Error(
+            'No saved SGPA records found for this student.'
+          )
+        }
+
+        if (!data.profile) {
+          throw new Error(
+            'Student academic profile could not be loaded.'
+          )
+        }
+
+        const sortedRecords = [...records].sort(
+          (a, b) => a.semester - b.semester
+        )
+
+        const latest =
+          sortedRecords[sortedRecords.length - 1]
+
+        const previous =
+          sortedRecords.length > 1
+            ? sortedRecords[sortedRecords.length - 2]
+            : null
+
+        setForm((previousForm) => ({
+          ...previousForm,
+
+          Previous_SGPA: previous
+            ? Number(previous.sgpa).toFixed(4)
+            : Number(latest.sgpa).toFixed(4),
+
+          Current_SGPA: Number(latest.sgpa).toFixed(4),
+
+          Current_Year: String(
+            data.profile.currentYear
+          ),
+
+          Current_Semester: String(
+            data.profile.currentSemester
+          ),
+
+          Repeated_Courses: '0',
+        }))
+      } catch (err) {
+        console.error(
+          'Failed to load student data:',
+          err
+        )
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Unable to load student data.'
+        )
+      } finally {
+        setLoadingStudentData(false)
+      }
+    }
+
+    loadStudentData()
+  }, [])
+
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement
+    >
   ) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    })
+    const { name, value } = e.target
+
+    setForm((previousForm) => ({
+      ...previousForm,
+      [name]: value,
+    }))
   }
 
   const handleSGPAChange = (
@@ -119,14 +192,16 @@ function Prediction() {
     const { name, value } = e.target
 
     if (value === '') {
-      setForm({
-        ...form,
+      setForm((previousForm) => ({
+        ...previousForm,
         [name]: '',
-      })
+      }))
+
       return
     }
 
-    const sgpaPattern = /^\d{0,1}(\.\d{0,4})?$/
+    const sgpaPattern =
+      /^\d{0,1}(\.\d{0,4})?$/
 
     if (!sgpaPattern.test(value)) {
       return
@@ -138,33 +213,124 @@ function Prediction() {
       return
     }
 
-    setForm({
-      ...form,
+    setForm((previousForm) => ({
+      ...previousForm,
       [name]: value,
-    })
+    }))
   }
 
-  const predictSGPA = async (e: React.FormEvent) => {
+  const predictSGPA = async (
+    e: React.FormEvent
+  ) => {
     e.preventDefault()
 
-    setLoading(true)
     setPrediction(null)
     setError('')
+
+    if (loadingStudentData) {
+      setError(
+        'Student academic information is still loading. Please wait.'
+      )
+
+      return
+    }
+
+    const previousSGPA = Number(
+      form.Previous_SGPA
+    )
+
+    const currentSGPA = Number(
+      form.Current_SGPA
+    )
+
+    const repeatedCourses = Number(
+      form.Repeated_Courses
+    )
+
+    const currentYear = Number(
+      form.Current_Year
+    )
+
+    const currentSemester = Number(
+      form.Current_Semester
+    )
+
+    if (
+      Number.isNaN(previousSGPA) ||
+      Number.isNaN(currentSGPA) ||
+      Number.isNaN(repeatedCourses) ||
+      Number.isNaN(currentYear) ||
+      Number.isNaN(currentSemester)
+    ) {
+      setError(
+        'Please provide valid academic information.'
+      )
+
+      return
+    }
+
+    if (
+      previousSGPA < 0 ||
+      previousSGPA > 4 ||
+      currentSGPA < 0 ||
+      currentSGPA > 4
+    ) {
+      setError(
+        'SGPA values must be between 0.0000 and 4.0000.'
+      )
+
+      return
+    }
+
+    if (repeatedCourses < 0) {
+      setError(
+        'Repeated courses cannot be negative.'
+      )
+
+      return
+    }
+
+    if (
+      currentYear < 1 ||
+      currentYear > 4
+    ) {
+      setError(
+        'Academic year must be between Year 1 and Year 4.'
+      )
+
+      return
+    }
+
+    if (
+      currentSemester < 1 ||
+      currentSemester > 8
+    ) {
+      setError(
+        'Semester must be between Semester 1 and Semester 8.'
+      )
+
+      return
+    }
+
+    setLoading(true)
 
     try {
       const response = await fetch(
         `${API_URL}/predict-next-sgpa`,
         {
           method: 'POST',
+
           headers: {
             'Content-Type': 'application/json',
+            Accept: 'application/json',
           },
+
           body: JSON.stringify({
-            Previous_SGPA: Number(form.Previous_SGPA),
-            Current_SGPA: Number(form.Current_SGPA),
-            Repeated_Courses: Number(form.Repeated_Courses),
-            Current_Year: Number(form.Current_Year),
-            Current_Semester: Number(form.Current_Semester),
+            Previous_SGPA: previousSGPA,
+            Current_SGPA: currentSGPA,
+            Repeated_Courses: repeatedCourses,
+            Current_Year: currentYear,
+            Current_Semester: currentSemester,
           }),
         }
       )
@@ -173,12 +339,39 @@ function Prediction() {
 
       if (!response.ok) {
         throw new Error(
-          data.detail || 'Prediction failed.'
+          typeof data.detail === 'string'
+            ? data.detail
+            : typeof data.message === 'string'
+              ? data.message
+              : 'Prediction failed.'
         )
       }
 
-      setPrediction(data.Predicted_Next_SGPA)
+      const predictedSGPA = Number(
+        data.Predicted_Next_SGPA
+      )
+
+      if (Number.isNaN(predictedSGPA)) {
+        throw new Error(
+          'The prediction service returned an invalid SGPA value.'
+        )
+      }
+
+      /*
+       * Keep the prediction within the valid SGPA range.
+       */
+      const safePrediction = Math.min(
+        4,
+        Math.max(0, predictedSGPA)
+      )
+
+      setPrediction(safePrediction)
     } catch (err) {
+      console.error(
+        'Prediction failed:',
+        err
+      )
+
       setError(
         err instanceof Error
           ? err.message
@@ -189,10 +382,25 @@ function Prediction() {
     }
   }
 
-  const getPerformanceLevel = (gpa: number) => {
-    if (gpa >= 3.5) return 'Excellent'
-    if (gpa >= 3.0) return 'Good'
-    if (gpa >= 2.0) return 'Satisfactory'
+  /*
+   * =========================================================
+   * PERFORMANCE LEVEL
+   * =========================================================
+   */
+  const getPerformanceLevel = (
+    gpa: number
+  ) => {
+    if (gpa >= 3.5) {
+      return 'Excellent'
+    }
+
+    if (gpa >= 3.0) {
+      return 'Good'
+    }
+
+    if (gpa >= 2.0) {
+      return 'Satisfactory'
+    }
 
     return 'Needs Improvement'
   }
@@ -200,11 +408,10 @@ function Prediction() {
   return (
     <main className="prediction-page">
 
-      {/* HEADER */}
-
       <section className="prediction-header">
 
         <div>
+
           <span className="prediction-eyebrow">
             AI PERFORMANCE ANALYTICS
           </span>
@@ -219,23 +426,30 @@ function Prediction() {
             academic performance data and our trained
             neural network model.
           </p>
+
         </div>
 
         <div className="prediction-ai-badge">
+
           <span>AI</span>
+
           <div>
-            <strong>Neural Network</strong>
-            <small>Prediction Engine</small>
+
+            <strong>
+              Neural Network
+            </strong>
+
+            <small>
+              Prediction Engine
+            </small>
+
           </div>
+
         </div>
 
       </section>
 
-      {/* MAIN GRID */}
-
       <section className="prediction-grid">
-
-        {/* INPUT CARD */}
 
         <div className="prediction-card">
 
@@ -246,20 +460,23 @@ function Prediction() {
             </div>
 
             <div>
-              <h2>Academic Information</h2>
+
+              <h2>
+                Academic Information
+              </h2>
 
               <p>
                 Enter your current academic details.
               </p>
+
             </div>
 
           </div>
 
+
           <form onSubmit={predictSGPA}>
 
             <div className="prediction-form-grid">
-
-              {/* Previous SGPA */}
 
               <div className="prediction-field">
 
@@ -275,6 +492,7 @@ function Prediction() {
                   placeholder="3.2000"
                   value={form.Previous_SGPA}
                   onChange={handleSGPAChange}
+                  disabled={loadingStudentData}
                   required
                 />
 
@@ -283,8 +501,6 @@ function Prediction() {
                 </small>
 
               </div>
-
-              {/* Current SGPA */}
 
               <div className="prediction-field">
 
@@ -300,6 +516,7 @@ function Prediction() {
                   placeholder="3.4500"
                   value={form.Current_SGPA}
                   onChange={handleSGPAChange}
+                  disabled={loadingStudentData}
                   required
                 />
 
@@ -308,8 +525,6 @@ function Prediction() {
                 </small>
 
               </div>
-
-              {/* Repeated Courses */}
 
               <div className="prediction-field">
 
@@ -325,6 +540,7 @@ function Prediction() {
                   step="1"
                   value={form.Repeated_Courses}
                   onChange={handleChange}
+                  disabled={loadingStudentData}
                   required
                 />
 
@@ -333,8 +549,6 @@ function Prediction() {
                 </small>
 
               </div>
-
-              {/* Academic Year */}
 
               <div className="prediction-field">
 
@@ -347,7 +561,14 @@ function Prediction() {
                   name="Current_Year"
                   value={form.Current_Year}
                   onChange={handleChange}
+                  disabled={loadingStudentData}
+                  required
                 >
+
+                  <option value="">
+                    Select Year
+                  </option>
+
                   <option value="1">
                     Year 1
                   </option>
@@ -363,11 +584,10 @@ function Prediction() {
                   <option value="4">
                     Year 4
                   </option>
+
                 </select>
 
               </div>
-
-              {/* Semester */}
 
               <div className="prediction-field">
 
@@ -380,7 +600,14 @@ function Prediction() {
                   name="Current_Semester"
                   value={form.Current_Semester}
                   onChange={handleChange}
+                  disabled={loadingStudentData}
+                  required
                 >
+
+                  <option value="">
+                    Select Semester
+                  </option>
+
                   {Array.from(
                     { length: 8 },
                     (_, index) => (
@@ -392,41 +619,58 @@ function Prediction() {
                       </option>
                     )
                   )}
+
                 </select>
 
               </div>
 
             </div>
 
+
             <button
               type="submit"
               className="prediction-submit"
-              disabled={loading}
+              disabled={
+                loading ||
+                loadingStudentData
+              }
             >
-              {loading
-                ? 'Running Prediction...'
-                : 'Predict Next Semester SGPA'}
 
-              {!loading && (
-                <span>→</span>
-              )}
+              {loadingStudentData
+                ? 'Loading Academic Data...'
+                : loading
+                  ? 'Running Prediction...'
+                  : 'Predict Next Semester SGPA'}
+
+              {!loading &&
+                !loadingStudentData && (
+                  <span>→</span>
+                )}
+
             </button>
 
           </form>
 
           {error && (
-            <div className="prediction-error">
-              <strong>Prediction unavailable</strong>
+
+            <div
+              className="prediction-error"
+              role="alert"
+            >
+
+              <strong>
+                Prediction unavailable
+              </strong>
 
               <span>
                 {error}
               </span>
+
             </div>
+
           )}
 
         </div>
-
-        {/* RESULT CARD */}
 
         <div className="prediction-card result-panel">
 
@@ -437,14 +681,19 @@ function Prediction() {
             </div>
 
             <div>
-              <h2>Prediction Result</h2>
+
+              <h2>
+                Prediction Result
+              </h2>
 
               <p>
                 AI-generated academic forecast.
               </p>
+
             </div>
 
           </div>
+
 
           {prediction === null ? (
 
@@ -485,12 +734,16 @@ function Prediction() {
               </div>
 
               <div className="performance-level">
-                {getPerformanceLevel(prediction)}
+                {getPerformanceLevel(
+                  prediction
+                )}
               </div>
+
 
               <div className="result-stat-grid">
 
                 <div>
+
                   <span>
                     Current SGPA
                   </span>
@@ -500,9 +753,12 @@ function Prediction() {
                       form.Current_SGPA
                     ).toFixed(4)}
                   </strong>
+
                 </div>
 
+
                 <div>
+
                   <span>
                     Predicted Change
                   </span>
@@ -510,24 +766,34 @@ function Prediction() {
                   <strong
                     className={
                       prediction >=
-                      Number(form.Current_SGPA)
+                      Number(
+                        form.Current_SGPA
+                      )
                         ? 'positive'
                         : 'negative'
                     }
                   >
+
                     {prediction >=
-                    Number(form.Current_SGPA)
+                    Number(
+                      form.Current_SGPA
+                    )
                       ? '+'
                       : ''}
 
                     {(
                       prediction -
-                      Number(form.Current_SGPA)
+                      Number(
+                        form.Current_SGPA
+                      )
                     ).toFixed(4)}
+
                   </strong>
+
                 </div>
 
               </div>
+
 
               <div className="prediction-message">
 
@@ -549,8 +815,6 @@ function Prediction() {
 
       </section>
 
-      {/* MODEL INFORMATION */}
-
       <section className="model-information">
 
         <div className="model-information-main">
@@ -560,6 +824,7 @@ function Prediction() {
           </div>
 
           <div>
+
             <strong>
               Neural Network Prediction Engine
             </strong>
@@ -569,17 +834,33 @@ function Prediction() {
               the trained Smart Campus academic
               performance model.
             </p>
+
           </div>
 
         </div>
 
+
         <div className="model-features">
 
-          <span>Previous SGPA</span>
-          <span>Current SGPA</span>
-          <span>Repeated Courses</span>
-          <span>Academic Year</span>
-          <span>Semester</span>
+          <span>
+            Previous SGPA
+          </span>
+
+          <span>
+            Current SGPA
+          </span>
+
+          <span>
+            Repeated Courses
+          </span>
+
+          <span>
+            Academic Year
+          </span>
+
+          <span>
+            Semester
+          </span>
 
         </div>
 
@@ -590,3 +871,4 @@ function Prediction() {
 }
 
 export default Prediction
+
