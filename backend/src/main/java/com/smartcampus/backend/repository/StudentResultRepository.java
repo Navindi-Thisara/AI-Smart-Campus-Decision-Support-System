@@ -29,4 +29,7 @@ public interface StudentResultRepository
             User user,
             Integer semester
     );
+
+    // Used by Staff Dashboard
+    List<StudentResult> findAllByOrderBySemesterAscCourseCodeAsc();
 }
