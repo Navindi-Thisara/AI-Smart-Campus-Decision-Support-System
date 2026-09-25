@@ -41,6 +41,30 @@ function StaffDashboard() {
   const [showAllAttention, setShowAllAttention] =
     useState<boolean>(false)
 
+  /*
+   * Staff eligibility update form
+   */
+  const [studentId, setStudentId] =
+    useState<string>('')
+
+  const [semester, setSemester] =
+    useState<string>('')
+
+  const [attendancePercentage, setAttendancePercentage] =
+    useState<string>('')
+
+  const [feePaid, setFeePaid] =
+    useState<boolean>(false)
+
+  const [updatingEligibility, setUpdatingEligibility] =
+    useState<boolean>(false)
+
+  const [updateMessage, setUpdateMessage] =
+    useState<string>('')
+
+  const [updateError, setUpdateError] =
+    useState<string>('')
+
   const loadDashboard = async (): Promise<void> => {
     try {
       setLoading(true)
@@ -60,7 +84,6 @@ function StaffDashboard() {
         await response.json()
 
       setDashboard(data)
-
       setShowAllAttention(false)
     } catch (err) {
       console.error(
@@ -79,6 +102,123 @@ function StaffDashboard() {
   useEffect(() => {
     loadDashboard()
   }, [])
+
+  /*
+   * Update student eligibility information
+   */
+  const handleUpdateEligibility = async (
+    event: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
+    event.preventDefault()
+
+    setUpdateMessage('')
+    setUpdateError('')
+
+    if (!studentId.trim()) {
+      setUpdateError(
+        'Student ID is required.'
+      )
+      return
+    }
+
+    const semesterNumber =
+      Number(semester)
+
+    if (
+      !semester ||
+      Number.isNaN(semesterNumber) ||
+      semesterNumber < 1
+    ) {
+      setUpdateError(
+        'Please enter a valid semester.'
+      )
+      return
+    }
+
+    const attendanceNumber =
+      Number(attendancePercentage)
+
+    if (
+      attendancePercentage === '' ||
+      Number.isNaN(attendanceNumber) ||
+      attendanceNumber < 0 ||
+      attendanceNumber > 100
+    ) {
+      setUpdateError(
+        'Attendance must be between 0 and 100.'
+      )
+      return
+    }
+
+    try {
+      setUpdatingEligibility(true)
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/staff/eligibility`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            studentId: studentId.trim(),
+            semester: semesterNumber,
+            attendancePercentage: attendanceNumber,
+            feePaid
+          })
+        }
+      )
+
+      if (!response.ok) {
+        let errorMessage =
+          'Failed to update eligibility information.'
+
+        try {
+          const errorText =
+            await response.text()
+
+          if (errorText) {
+            errorMessage = errorText
+          }
+        } catch {
+          // Keep default error message.
+        }
+
+        throw new Error(errorMessage)
+      }
+
+      setUpdateMessage(
+        'Eligibility information updated successfully.'
+      )
+
+      /*
+       * Clear the form after successful update.
+       */
+      setStudentId('')
+      setSemester('')
+      setAttendancePercentage('')
+      setFeePaid(false)
+
+      /*
+       * Reload dashboard so all statistics and
+       * eligibility information are updated.
+       */
+      await loadDashboard()
+    } catch (err) {
+      console.error(
+        'Eligibility update error:',
+        err
+      )
+
+      setUpdateError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to update eligibility information.'
+      )
+    } finally {
+      setUpdatingEligibility(false)
+    }
+  }
 
   const totalStudents =
     dashboard?.totalStudents ?? 0
@@ -171,9 +311,7 @@ function StaffDashboard() {
     const numericValue =
       Number(value)
 
-    if (
-      Number.isNaN(numericValue)
-    ) {
+    if (Number.isNaN(numericValue)) {
       return '—'
     }
 
@@ -231,7 +369,6 @@ function StaffDashboard() {
   if (loading) {
     return (
       <main className="staff-dashboard">
-
         <section className="staff-loading">
 
           <div className="staff-spinner" />
@@ -246,7 +383,6 @@ function StaffDashboard() {
           </p>
 
         </section>
-
       </main>
     )
   }
@@ -289,6 +425,10 @@ function StaffDashboard() {
 
   return (
     <main className="staff-dashboard">
+
+      {/* =====================================================
+          HEADER
+      ====================================================== */}
 
       <section className="staff-dashboard-header">
 
@@ -357,6 +497,11 @@ function StaffDashboard() {
 
       </section>
 
+
+      {/* =====================================================
+          STATISTICS
+      ====================================================== */}
+
       <section className="staff-stat-grid">
 
         <article className="staff-stat-card">
@@ -404,6 +549,7 @@ function StaffDashboard() {
 
         </article>
 
+
         <article className="staff-stat-card">
 
           <div className="staff-stat-top">
@@ -438,6 +584,7 @@ function StaffDashboard() {
           </span>
 
         </article>
+
 
         <article className="staff-stat-card">
 
@@ -477,6 +624,7 @@ function StaffDashboard() {
           </span>
 
         </article>
+
 
         <article className="staff-stat-card">
 
@@ -522,6 +670,195 @@ function StaffDashboard() {
         </article>
 
       </section>
+
+
+      {/* =====================================================
+          STAFF ELIGIBILITY UPDATE
+      ====================================================== */}
+
+      <section className="staff-panel staff-update-panel">
+
+        <div className="staff-panel-header">
+
+          <div>
+
+            <span className="staff-section-label">
+              STUDENT DATA MANAGEMENT
+            </span>
+
+            <h2>
+              Update eligibility information
+            </h2>
+
+            <p>
+              Update attendance and fee payment details
+              for a student's academic record.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <form
+          className="staff-update-form"
+          onSubmit={handleUpdateEligibility}
+        >
+
+          <div className="staff-form-group">
+
+            <label htmlFor="studentId">
+              Student ID
+            </label>
+
+            <input
+              id="studentId"
+              type="text"
+              value={studentId}
+              onChange={(event) =>
+                setStudentId(
+                  event.target.value
+                )
+              }
+              placeholder="e.g. KDU/COE/25/0001"
+              disabled={updatingEligibility}
+            />
+
+          </div>
+
+
+          <div className="staff-form-group">
+
+            <label htmlFor="semester">
+              Semester
+            </label>
+
+            <input
+              id="semester"
+              type="number"
+              min="1"
+              max="8"
+              value={semester}
+              onChange={(event) =>
+                setSemester(
+                  event.target.value
+                )
+              }
+              placeholder="e.g. 4"
+              disabled={updatingEligibility}
+            />
+
+          </div>
+
+
+          <div className="staff-form-group">
+
+            <label htmlFor="attendance">
+              Attendance (%)
+            </label>
+
+            <input
+              id="attendance"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              value={attendancePercentage}
+              onChange={(event) =>
+                setAttendancePercentage(
+                  event.target.value
+                )
+              }
+              placeholder="e.g. 85"
+              disabled={updatingEligibility}
+            />
+
+          </div>
+
+
+          <div className="staff-form-group staff-fee-group">
+
+            <label>
+              Fee payment
+            </label>
+
+            <label className="staff-checkbox-label">
+
+              <input
+                type="checkbox"
+                checked={feePaid}
+                onChange={(event) =>
+                  setFeePaid(
+                    event.target.checked
+                  )
+                }
+                disabled={
+                  updatingEligibility
+                }
+              />
+
+              <span>
+                Fee paid
+              </span>
+
+            </label>
+
+          </div>
+
+
+          <button
+            type="submit"
+            className="staff-update-button"
+            disabled={updatingEligibility}
+          >
+
+            {updatingEligibility ? (
+              <>
+                <span className="staff-button-spinner" />
+                Updating...
+              </>
+            ) : (
+              <>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
+                  <path d="M5 12h14" />
+                  <path d="M12 5v14" />
+                </svg>
+
+                Update eligibility
+              </>
+            )}
+
+          </button>
+
+        </form>
+
+
+        {updateMessage && (
+          <div className="staff-update-success">
+            <span>✓</span>
+            {updateMessage}
+          </div>
+        )}
+
+
+        {updateError && (
+          <div className="staff-update-error">
+            <span>!</span>
+            {updateError}
+          </div>
+        )}
+
+      </section>
+
+
+      {/* =====================================================
+          PERFORMANCE + ELIGIBILITY
+      ====================================================== */}
 
       <section className="staff-main-grid">
 
@@ -662,6 +999,7 @@ function StaffDashboard() {
 
         </article>
 
+
         <article className="staff-panel staff-eligibility-panel">
 
           <div className="staff-panel-header">
@@ -780,6 +1118,11 @@ function StaffDashboard() {
 
       </section>
 
+
+      {/* =====================================================
+          ATTENTION + SUMMARY
+      ====================================================== */}
+
       <section className="staff-bottom-grid">
 
         <article className="staff-panel staff-attention-panel">
@@ -892,8 +1235,6 @@ function StaffDashboard() {
                     key={student.studentId}
                   >
 
-                    {/* Avatar */}
-
                     <div className="staff-student-avatar">
 
                       {getInitials(
@@ -902,8 +1243,6 @@ function StaffDashboard() {
 
                     </div>
 
-
-                    {/* Student */}
 
                     <div className="staff-student-info">
 
@@ -917,8 +1256,6 @@ function StaffDashboard() {
 
                     </div>
 
-
-                    {/* Semester + SGPA */}
 
                     <div className="staff-student-academic">
 
@@ -937,8 +1274,6 @@ function StaffDashboard() {
 
                     </div>
 
-
-                    {/* Attendance */}
 
                     <div className="staff-student-attendance">
 
@@ -974,8 +1309,6 @@ function StaffDashboard() {
                     </div>
 
 
-                    {/* Status */}
-
                     <span
                       className={`staff-status-badge ${getStatusClass(
                         student.eligibilityStatus
@@ -987,6 +1320,7 @@ function StaffDashboard() {
                       )}
 
                     </span>
+
 
                     <div
                       className="staff-attention-reason"
@@ -1012,6 +1346,7 @@ function StaffDashboard() {
 
         </article>
 
+
         <article className="staff-panel staff-summary-panel">
 
           <div className="staff-panel-header">
@@ -1036,9 +1371,6 @@ function StaffDashboard() {
 
 
           <div className="staff-summary-list">
-
-
-            {/* SGPA */}
 
             <div className="staff-summary-item">
 
@@ -1079,8 +1411,6 @@ function StaffDashboard() {
             </div>
 
 
-            {/* Eligibility */}
-
             <div className="staff-summary-item">
 
               <div className="staff-summary-icon green">
@@ -1112,6 +1442,7 @@ function StaffDashboard() {
               </div>
 
             </div>
+
 
             <div className="staff-summary-item">
 

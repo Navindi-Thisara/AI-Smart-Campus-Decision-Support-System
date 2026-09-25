@@ -45,12 +45,19 @@ public class EligibilityService {
         this.studentResultRepository = studentResultRepository;
     }
 
-    public EligibilityResponse evaluateEligibility(
-            String studentId,
-            Integer semester
-    ) {
+    /**
+     * Single source of truth for eligibility.
+     *
+     * The semester is NOT received from the frontend.
+     * It is always taken from the student's academic profile.
+     */
+    public EligibilityResponse evaluateEligibility(String studentId) {
 
         List<String> explanations = new ArrayList<>();
+
+        // =========================================================
+        // FIND STUDENT
+        // =========================================================
 
         User user = userRepository.findByStudentId(studentId)
                 .orElseThrow(() ->
@@ -59,7 +66,10 @@ public class EligibilityService {
                         )
                 );
 
-        
+        // =========================================================
+        // RULE 01 - ACADEMIC PROFILE
+        // =========================================================
+
         StudentAcademicProfile profile =
                 profileRepository.findByUser(user)
                         .orElse(null);
@@ -72,7 +82,7 @@ public class EligibilityService {
 
             return new EligibilityResponse(
                     studentId,
-                    semester,
+                    null,
                     EligibilityStatus.NOT_ELIGIBLE.name(),
                     false,
                     explanations
@@ -83,218 +93,327 @@ public class EligibilityService {
                 "Academic profile exists."
         );
 
-       
-        StudentEligibilityRecord record =
-                eligibilityRepository
-                        .findByUserAndSemester(user, semester)
-                        .orElse(null);
+        // =========================================================
+        // GET CURRENT SEMESTER FROM DATABASE
+        // =========================================================
 
-        if (record == null) {
+        Integer currentSemester =
+                profile.getCurrentSemester();
+
+        if (currentSemester == null) {
 
             explanations.add(
-                    "Attendance and fee information is missing."
+                    "Current semester information is not available."
             );
 
             return new EligibilityResponse(
                     studentId,
-                    semester,
+                    null,
                     EligibilityStatus.CONDITIONALLY_ELIGIBLE.name(),
                     false,
                     explanations
             );
         }
 
-        
-        boolean attendancePassed =
-                record.getAttendancePercentage()
-                        .compareTo(MIN_ATTENDANCE) >= 0;
+        explanations.add(
+                "Current semester: " + currentSemester + "."
+        );
 
-        if (attendancePassed) {
+        // =========================================================
+        // GET ATTENDANCE + FEE RECORD
+        // =========================================================
 
-            explanations.add(
-                    "Attendance requirement satisfied: "
-                            + record.getAttendancePercentage()
-                            + "%."
-            );
+        StudentEligibilityRecord record =
+                eligibilityRepository
+                        .findByUserAndSemester(
+                                user,
+                                currentSemester
+                        )
+                        .orElse(null);
+
+        // =========================================================
+        // RULE 02 - ATTENDANCE
+        // =========================================================
+
+        boolean attendanceEvaluated = false;
+        boolean attendancePassed = false;
+
+        if (record != null &&
+                record.getAttendancePercentage() != null) {
+
+            attendanceEvaluated = true;
+
+            attendancePassed =
+                    record.getAttendancePercentage()
+                            .compareTo(MIN_ATTENDANCE) >= 0;
+
+            if (attendancePassed) {
+
+                explanations.add(
+                        "Attendance requirement satisfied: "
+                                + record.getAttendancePercentage()
+                                + "%."
+                );
+
+            } else {
+
+                explanations.add(
+                        "Attendance requirement not satisfied: "
+                                + record.getAttendancePercentage()
+                                + "%."
+                );
+            }
 
         } else {
 
             explanations.add(
-                    "Attendance requirement not satisfied: "
-                            + record.getAttendancePercentage()
-                            + "%."
+                    "Attendance information is not available."
             );
         }
 
-        boolean feePassed =
-                Boolean.TRUE.equals(record.getFeePaid());
+        // =========================================================
+        // RULE 03 - FEE PAYMENT
+        // =========================================================
 
-        if (feePassed) {
+        boolean feeEvaluated = false;
+        boolean feePassed = false;
 
-            explanations.add(
-                    "Semester fee payment requirement satisfied."
-            );
+        if (record != null &&
+                record.getFeePaid() != null) {
+
+            feeEvaluated = true;
+
+            feePassed =
+                    Boolean.TRUE.equals(
+                            record.getFeePaid()
+                    );
+
+            if (feePassed) {
+
+                explanations.add(
+                        "Semester fee payment requirement satisfied."
+                );
+
+            } else {
+
+                explanations.add(
+                        "Semester fee has not been paid."
+                );
+            }
 
         } else {
 
             explanations.add(
-                    "Semester fee has not been paid."
+                    "Semester fee payment information is not available."
             );
         }
+
+        // =========================================================
+        // RULE 04 - PREVIOUS REQUIRED MODULES
+        // =========================================================
 
         boolean previousModulesPassed =
                 checkPreviousRequiredModules(
                         user,
                         profile,
-                        semester,
+                        currentSemester,
                         explanations
                 );
 
-        
-        if (attendancePassed
-                && feePassed
-                && previousModulesPassed) {
+        // =========================================================
+        // FINAL DECISION
+        // =========================================================
+
+        /*
+         * Any evaluated mandatory rule that fails
+         * means NOT_ELIGIBLE.
+         */
+        if ((attendanceEvaluated && !attendancePassed)
+                || (feeEvaluated && !feePassed)
+                || !previousModulesPassed) {
 
             return new EligibilityResponse(
                     studentId,
-                    semester,
-                    EligibilityStatus.ELIGIBLE.name(),
-                    true,
-                    explanations
-            );
-        }
-
-        if (!attendancePassed || !feePassed) {
-
-            return new EligibilityResponse(
-                    studentId,
-                    semester,
+                    currentSemester,
                     EligibilityStatus.NOT_ELIGIBLE.name(),
                     false,
                     explanations
             );
         }
 
+        /*
+         * Everything required has been evaluated
+         * and all requirements have passed.
+         */
+        if (attendanceEvaluated
+                && feeEvaluated
+                && attendancePassed
+                && feePassed
+                && previousModulesPassed) {
+
+            return new EligibilityResponse(
+                    studentId,
+                    currentSemester,
+                    EligibilityStatus.ELIGIBLE.name(),
+                    true,
+                    explanations
+            );
+        }
+
+        /*
+         * No evaluated rule has failed, but some required
+         * information is missing.
+         */
         return new EligibilityResponse(
                 studentId,
-                semester,
+                currentSemester,
                 EligibilityStatus.CONDITIONALLY_ELIGIBLE.name(),
                 false,
                 explanations
         );
     }
 
+    // =============================================================
+    // RULE 04 - PREVIOUS REQUIRED MODULES
+    // =============================================================
 
-private boolean checkPreviousRequiredModules(
-        User user,
-        StudentAcademicProfile profile,
-        Integer currentSemester,
-        List<String> explanations
-) {
+    private boolean checkPreviousRequiredModules(
+            User user,
+            StudentAcademicProfile profile,
+            Integer currentSemester,
+            List<String> explanations
+    ) {
 
-    
-    if (currentSemester == null || currentSemester <= 1) {
+        /*
+         * Semester 1 has no previous semester requirements.
+         */
+        if (currentSemester == null || currentSemester <= 1) {
 
-        explanations.add(
-                "No previous required modules exist for Semester "
-                        + currentSemester + "."
-        );
-
-        return true;
-    }
-
-   
-    List<StudentResult> studentResults =
-            studentResultRepository
-                    .findByUserOrderBySemesterAscCourseCodeAsc(
-                            user
-                    );
-
-    
-    Map<String, StudentResult> resultMap =
-            new HashMap<>();
-
-    for (StudentResult result : studentResults) {
-
-        if (result.getCourseCode() != null) {
-
-            resultMap.put(
-                    result.getCourseCode(),
-                    result
+            explanations.add(
+                    "No previous required modules exist for Semester "
+                            + currentSemester + "."
             );
+
+            return true;
         }
-    }
 
-    boolean allPreviousModulesPassed = true;
+        // =========================================================
+        // GET STUDENT RESULTS
+        // =========================================================
 
-    
-    for (int semester = 1;
-         semester < currentSemester;
-         semester++) {
-
-       
-        List<CourseModule> previousModules =
-                courseModuleRepository
-                        .findModulesByDegreeAndSemester(
-                                profile.getDegreeId(),
-                                semester
+        List<StudentResult> studentResults =
+                studentResultRepository
+                        .findByUserOrderBySemesterAscCourseCodeAsc(
+                                user
                         );
 
-        
-        for (CourseModule courseModule : previousModules) {
+        // =========================================================
+        // MAP RESULTS BY COURSE CODE
+        // =========================================================
 
-            String courseCode =
-                    courseModule.getCourseCode();
+        Map<String, StudentResult> resultMap =
+                new HashMap<>();
 
-            StudentResult result =
-                    resultMap.get(courseCode);
+        for (StudentResult result : studentResults) {
 
-            
-            if (result == null) {
+            if (result.getCourseCode() != null) {
 
-                allPreviousModulesPassed = false;
-
-                explanations.add(
-                        "Previous required module not completed: "
-                                + courseCode
-                                + " - "
-                                + courseModule.getModuleName()
-                );
-
-                continue;
-            }
-
-           
-            if (!isPassingGrade(result.getGrade())) {
-
-                allPreviousModulesPassed = false;
-
-                explanations.add(
-                        "Previous required module not passed: "
-                                + courseCode
-                                + " - "
-                                + courseModule.getModuleName()
-                                + " (Grade: "
-                                + result.getGrade()
-                                + ")."
+                resultMap.put(
+                        result.getCourseCode().trim().toUpperCase(),
+                        result
                 );
             }
         }
+
+        boolean allPreviousModulesPassed = true;
+
+        // =========================================================
+        // CHECK ALL PREVIOUS SEMESTERS
+        // =========================================================
+
+        for (int semester = 1;
+             semester < currentSemester;
+             semester++) {
+
+            List<CourseModule> previousModules =
+                    courseModuleRepository
+                            .findModulesByDegreeAndSemester(
+                                    profile.getDegreeId(),
+                                    semester
+                            );
+
+            for (CourseModule courseModule : previousModules) {
+
+                String courseCode =
+                        courseModule.getCourseCode();
+
+                if (courseCode == null) {
+                    continue;
+                }
+
+                String normalizedCourseCode =
+                        courseCode.trim().toUpperCase();
+
+                StudentResult result =
+                        resultMap.get(normalizedCourseCode);
+
+                // -------------------------------------------------
+                // NO RESULT
+                // -------------------------------------------------
+
+                if (result == null) {
+
+                    allPreviousModulesPassed = false;
+
+                    explanations.add(
+                            "Previous required module not completed: "
+                                    + courseCode
+                                    + " - "
+                                    + courseModule.getModuleName()
+                    );
+
+                    continue;
+                }
+
+                // -------------------------------------------------
+                // RESULT EXISTS BUT NOT PASSED
+                // -------------------------------------------------
+
+                if (!isPassingGrade(result.getGrade())) {
+
+                    allPreviousModulesPassed = false;
+
+                    explanations.add(
+                            "Previous required module not passed: "
+                                    + courseCode
+                                    + " - "
+                                    + courseModule.getModuleName()
+                                    + " (Grade: "
+                                    + result.getGrade()
+                                    + ")."
+                    );
+                }
+            }
+        }
+
+        // =========================================================
+        // ALL PREVIOUS MODULES PASSED
+        // =========================================================
+
+        if (allPreviousModulesPassed) {
+
+            explanations.add(
+                    "All required modules from previous semesters "
+                            + "have been successfully completed."
+            );
+        }
+
+        return allPreviousModulesPassed;
     }
 
-   
-    if (allPreviousModulesPassed) {
-
-        explanations.add(
-                "All required modules from previous semesters "
-                        + "have been successfully completed."
-        );
-    }
-
-    return allPreviousModulesPassed;
-}
-
-
+    // =============================================================
+    // PASSING GRADE
+    // =============================================================
 
     private boolean isPassingGrade(String grade) {
 
@@ -318,4 +437,3 @@ private boolean checkPreviousRequiredModules(
         };
     }
 }
-

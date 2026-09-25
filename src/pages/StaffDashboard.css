@@ -13,6 +13,10 @@
   box-sizing: border-box;
 }
 
+/* =========================================================
+   HEADER
+========================================================= */
+
 .staff-dashboard-header {
   display: flex;
   align-items: flex-end;
@@ -44,8 +48,8 @@
 }
 
 .staff-dashboard-header p {
-  margin: 0;
   max-width: 680px;
+  margin: 0;
   color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.7;
@@ -112,6 +116,10 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* =========================================================
+   STATISTICS
+========================================================= */
+
 .staff-stat-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -177,22 +185,22 @@
 
 .staff-stat-icon.blue {
   color: var(--brand-primary);
-  background: rgba(37, 99, 235, 0.10);
+  background: rgba(37, 99, 235, 0.1);
 }
 
 .staff-stat-icon.green {
   color: #16a34a;
-  background: rgba(22, 163, 74, 0.10);
+  background: rgba(22, 163, 74, 0.1);
 }
 
 .staff-stat-icon.amber {
   color: #d97706;
-  background: rgba(217, 119, 6, 0.10);
+  background: rgba(217, 119, 6, 0.1);
 }
 
 .staff-stat-icon.red {
   color: #dc2626;
-  background: rgba(220, 38, 38, 0.10);
+  background: rgba(220, 38, 38, 0.1);
 }
 
 .staff-stat-value {
@@ -225,18 +233,321 @@
   color: #dc2626;
 }
 
-.staff-main-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.9fr);
-  gap: 18px;
+/* =========================================================
+   ELIGIBILITY UPDATE PANEL
+========================================================= */
+
+.staff-update-panel {
   margin-bottom: 18px;
 }
 
+.staff-update-panel .staff-panel-header {
+  padding-bottom: 18px;
+}
+
+/*
+ * Main form layout
+ */
+.staff-update-form {
+  display: grid;
+  grid-template-columns:
+    minmax(180px, 1.4fr)
+    minmax(110px, 0.65fr)
+    minmax(160px, 0.9fr)
+    minmax(150px, 0.8fr)
+    auto;
+
+  align-items: end;
+  gap: 14px;
+
+  padding: 0 22px 20px;
+}
+
+/*
+ * Individual field
+ */
+.staff-form-group {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.staff-form-group > label:first-child {
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+}
+
+/*
+ * Text / number inputs
+ */
+.staff-form-group input[type="text"],
+.staff-form-group input[type="number"] {
+  width: 100%;
+  height: 42px;
+  min-width: 0;
+
+  padding: 0 12px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  outline: none;
+
+  background: var(--background, var(--surface));
+  color: var(--text-primary);
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 550;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.staff-form-group input[type="text"]::placeholder,
+.staff-form-group input[type="number"]::placeholder {
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+.staff-form-group input[type="text"]:hover,
+.staff-form-group input[type="number"]:hover {
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
+.staff-form-group input[type="text"]:focus,
+.staff-form-group input[type="number"]:focus {
+  border-color: var(--brand-primary);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+/*
+ * Remove browser number arrows
+ */
+.staff-form-group input[type="number"]::-webkit-inner-spin-button,
+.staff-form-group input[type="number"]::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.staff-form-group input[type="number"] {
+  appearance: textfield;
+}
+
+/*
+ * Disabled inputs
+ */
+.staff-form-group input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/*
+ * Fee payment field
+ */
+.staff-fee-group {
+  min-width: 140px;
+}
+
+.staff-checkbox-label {
+  display: flex !important;
+  height: 42px;
+  align-items: center;
+  gap: 9px;
+
+  padding: 0 12px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  background: var(--background, var(--surface));
+  color: var(--text-secondary);
+
+  font-size: 12px !important;
+  font-weight: 600 !important;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.staff-checkbox-label:hover {
+  border-color: rgba(37, 99, 235, 0.35);
+  background: var(--surface);
+}
+
+.staff-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+
+  accent-color: var(--brand-primary);
+
+  cursor: pointer;
+}
+
+.staff-checkbox-label input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+}
+
+/*
+ * Update button
+ */
+.staff-update-button {
+  display: inline-flex;
+  height: 42px;
+  min-width: 160px;
+
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 0 16px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: var(--brand-primary);
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 750;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  box-shadow: 0 5px 14px rgba(37, 99, 235, 0.16);
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.staff-update-button svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.staff-update-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 18px rgba(37, 99, 235, 0.22);
+}
+
+.staff-update-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.staff-update-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/*
+ * Button loading spinner
+ */
+.staff-button-spinner {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+
+  animation: staff-button-spin 0.7s linear infinite;
+}
+
+@keyframes staff-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/*
+ * Success / error messages
+ */
+.staff-update-success,
+.staff-update-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin: 0 22px 20px;
+  padding: 10px 12px;
+
+  border-radius: 9px;
+
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.staff-update-success {
+  border: 1px solid rgba(22, 163, 74, 0.18);
+  background: rgba(22, 163, 74, 0.07);
+  color: #15803d;
+}
+
+.staff-update-error {
+  border: 1px solid rgba(220, 38, 38, 0.18);
+  background: rgba(220, 38, 38, 0.07);
+  color: #b91c1c;
+}
+
+.staff-update-success span,
+.staff-update-error span {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  place-items: center;
+
+  border-radius: 50%;
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.staff-update-success span {
+  background: rgba(22, 163, 74, 0.12);
+}
+
+.staff-update-error span {
+  background: rgba(220, 38, 38, 0.12);
+}
+
+/* =========================================================
+   MAIN GRID
+========================================================= */
+
+.staff-main-grid,
 .staff-bottom-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.9fr);
+  grid-template-columns:
+    minmax(0, 1.7fr)
+    minmax(320px, 0.9fr);
   gap: 18px;
 }
+
+.staff-main-grid {
+  margin-bottom: 18px;
+}
+
+/* =========================================================
+   PANELS
+========================================================= */
 
 .staff-panel {
   min-width: 0;
@@ -297,6 +608,9 @@
   font-size: 10px;
 }
 
+/* =========================================================
+   PERFORMANCE CHART
+========================================================= */
 
 .staff-chart {
   --plot-height: 215px;
@@ -308,15 +622,12 @@
 }
 
 .staff-chart-y {
+  display: flex;
   width: 34px;
   height: var(--plot-height);
-
-  display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   justify-content: space-between;
-
-  flex: 0 0 auto;
-
   padding: 0;
 
   color: var(--text-muted);
@@ -327,38 +638,32 @@
 
 .staff-chart-content {
   position: relative;
-
   flex: 1;
   min-width: 0;
-
   height: var(--plot-height);
-
   margin-left: 12px;
 }
 
 .staff-grid-lines {
   position: absolute;
-
   top: 0;
-  left: 0;
   right: 0;
-
-  width: 100%;
-  height: var(--plot-height);
+  left: 0;
+  z-index: 1;
 
   display: flex;
+  width: 100%;
+  height: var(--plot-height);
   flex-direction: column;
   justify-content: space-between;
 
   pointer-events: none;
-  z-index: 1;
 }
 
 .staff-grid-lines span {
   display: block;
   width: 100%;
   height: 0;
-
   border-top: 1px dashed var(--border);
 }
 
@@ -369,112 +674,83 @@
 
 .staff-chart-bars {
   position: absolute;
-
   top: 0;
-  left: 0;
   right: 0;
+  left: 0;
+  z-index: 2;
 
+  display: grid;
   width: 100%;
   height: var(--plot-height);
 
-  display: grid;
-
-  grid-template-columns: repeat(
-    8,
-    minmax(28px, 1fr)
-  );
-
+  grid-template-columns: repeat(8, minmax(28px, 1fr));
   gap: 10px;
-
   padding: 0 8px;
-
-  z-index: 2;
 }
 
 .staff-chart-column {
   position: relative;
-
+  display: block;
   width: 100%;
   height: var(--plot-height);
-
   min-width: 0;
-
-  display: block;
 }
 
 .staff-bar-value {
   position: absolute;
-
   top: -20px;
   left: 50%;
-
-  transform: translateX(-50%);
-
-  width: max-content;
-  height: 18px;
+  z-index: 5;
 
   display: flex;
+  width: max-content;
+  height: 18px;
   align-items: center;
   justify-content: center;
 
   margin: 0;
+  transform: translateX(-50%);
 
   color: var(--text-secondary);
   font-size: 10px;
   font-weight: 800;
-
   white-space: nowrap;
-
-  z-index: 5;
 }
 
 .staff-bar-track {
   position: absolute;
-
-  left: 50%;
   bottom: 0;
-
-  transform: translateX(-50%);
-
-  width: 100%;
-  max-width: 46px;
-
-  height: var(--plot-height);
+  left: 50%;
+  z-index: 3;
 
   display: flex;
+  width: 100%;
+  max-width: 46px;
+  height: var(--plot-height);
   align-items: flex-end;
   justify-content: center;
 
   margin: 0;
   padding: 0;
+  transform: translateX(-50%);
 
   overflow: visible;
-
   background: transparent;
-
-  z-index: 3;
 }
 
 .staff-chart-bar {
   display: block;
-
   width: 100%;
-
   min-height: 0;
   height: var(--bar-height, 0%);
-
   flex: 0 0 auto;
 
   margin: 0;
   padding: 0;
 
   border-radius: 8px 8px 4px 4px;
-
   background: var(--brand-primary);
-
-  box-shadow:
-    0 5px 13px
-    rgba(37, 99, 235, 0.18);
+  box-shadow: 0 5px 13px rgba(37, 99, 235, 0.18);
 
   transition:
     height 0.5s ease,
@@ -484,30 +760,26 @@
 .staff-chart-column > label,
 .staff-chart-column > span:not(.staff-bar-value) {
   position: absolute;
-
-  left: 50%;
   bottom: -25px;
+  left: 50%;
 
-  transform: translateX(-50%);
-
+  display: flex;
   width: max-content;
   min-width: 18px;
   height: 18px;
-
-  display: flex;
   align-items: center;
   justify-content: center;
+
+  transform: translateX(-50%);
 
   color: var(--text-muted);
   font-size: 10px;
   font-weight: 700;
-
   white-space: nowrap;
 }
 
 .staff-chart-empty {
   position: absolute;
-
   inset: 0;
 
   display: flex;
@@ -516,9 +788,12 @@
 
   color: var(--text-muted);
   font-size: 12px;
-
   z-index: 5;
 }
+
+/* =========================================================
+   ELIGIBILITY DONUT
+========================================================= */
 
 .staff-eligibility-panel {
   display: flex;
@@ -542,41 +817,27 @@
   position: relative;
 
   display: grid;
-
   width: 170px;
   height: 170px;
-
   place-items: center;
 
   border-radius: 50%;
 
-  background:
-    conic-gradient(
-      #16a34a 0 var(--eligible),
-      #f59e0b
-        var(--eligible)
-        calc(
-          var(--eligible) +
-          var(--conditional)
-        ),
-      #ef4444
-        calc(
-          var(--eligible) +
-          var(--conditional)
-        )
-        100%
-    );
+  background: conic-gradient(
+    #16a34a 0 var(--eligible),
+    #f59e0b var(--eligible)
+      calc(var(--eligible) + var(--conditional)),
+    #ef4444 calc(var(--eligible) + var(--conditional)) 100%
+  );
 }
 
 .staff-donut::before {
   content: "";
 
   position: absolute;
-
   inset: 18px;
 
   border-radius: 50%;
-
   background: var(--surface);
 }
 
@@ -611,9 +872,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   min-height: 40px;
-
   border-top: 1px solid var(--border);
 }
 
@@ -650,6 +909,10 @@
   background: #ef4444;
 }
 
+/* =========================================================
+   ATTENTION PANEL
+========================================================= */
+
 .staff-attention-panel {
   min-height: 300px;
 }
@@ -663,7 +926,6 @@
   background: transparent;
 
   color: var(--brand-primary);
-
   font-size: 11px;
   font-weight: 750;
 
@@ -681,7 +943,6 @@
 
 .staff-student-row {
   display: grid;
-
   grid-template-columns:
     38px
     minmax(130px, 1.4fr)
@@ -691,17 +952,14 @@
     minmax(150px, 1fr);
 
   align-items: center;
-
   gap: 12px;
 
   min-height: 68px;
-
   padding: 11px 22px;
 
   border-bottom: 1px solid var(--border);
 
-  transition:
-    background 0.2s ease;
+  transition: background 0.2s ease;
 }
 
 .staff-student-row:last-child {
@@ -709,30 +967,22 @@
 }
 
 .staff-student-row:hover {
-  background:
-    var(
-      --background,
-      rgba(127, 127, 127, 0.025)
-    );
+  background: var(
+    --background,
+    rgba(127, 127, 127, 0.025)
+  );
 }
 
 .staff-student-avatar {
   display: grid;
-
   width: 36px;
   height: 36px;
-
   place-items: center;
 
-  border:
-    1px solid
-    rgba(37, 99, 235, 0.16);
-
+  border: 1px solid rgba(37, 99, 235, 0.16);
   border-radius: 10px;
 
-  background:
-    rgba(37, 99, 235, 0.08);
-
+  background: rgba(37, 99, 235, 0.08);
   color: var(--brand-primary);
 
   font-size: 11px;
@@ -740,9 +990,8 @@
 }
 
 .staff-student-info {
-  min-width: 0;
-
   display: flex;
+  min-width: 0;
   flex-direction: column;
   gap: 3px;
 }
@@ -751,7 +1000,6 @@
   overflow: hidden;
 
   color: var(--text-primary);
-
   font-size: 12px;
   font-weight: 700;
 
@@ -763,7 +1011,6 @@
   overflow: hidden;
 
   color: var(--text-muted);
-
   font-size: 10px;
 
   text-overflow: ellipsis;
@@ -796,27 +1043,22 @@
 
 .staff-status-badge {
   display: inline-flex;
-
   width: max-content;
-
+  min-height: 26px;
   align-items: center;
   justify-content: center;
 
-  min-height: 26px;
-
   padding: 0 9px;
-
   border-radius: 7px;
 
   font-size: 9px;
   font-weight: 750;
-
   white-space: nowrap;
 }
 
 .staff-status-badge.eligible {
   color: #15803d;
-  background: rgba(22, 163, 74, 0.10);
+  background: rgba(22, 163, 74, 0.1);
 }
 
 .staff-status-badge.conditional {
@@ -826,20 +1068,23 @@
 
 .staff-status-badge.not-eligible {
   color: #b91c1c;
-  background: rgba(239, 68, 68, 0.10);
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .staff-attention-reason {
   overflow: hidden;
 
   color: var(--text-muted);
-
   font-size: 10px;
   line-height: 1.4;
 
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* =========================================================
+   SUMMARY
+========================================================= */
 
 .staff-summary-panel {
   min-height: 300px;
@@ -865,14 +1110,10 @@
 
 .staff-summary-icon {
   display: grid;
-
   width: 34px;
   height: 34px;
-
   flex-shrink: 0;
-
   place-items: center;
-
   border-radius: 9px;
 }
 
@@ -883,24 +1124,22 @@
 
 .staff-summary-icon.blue {
   color: var(--brand-primary);
-  background: rgba(37, 99, 235, 0.10);
+  background: rgba(37, 99, 235, 0.1);
 }
 
 .staff-summary-icon.green {
   color: #16a34a;
-  background: rgba(22, 163, 74, 0.10);
+  background: rgba(22, 163, 74, 0.1);
 }
 
 .staff-summary-icon.amber {
   color: #d97706;
-  background: rgba(217, 119, 6, 0.10);
+  background: rgba(217, 119, 6, 0.1);
 }
 
 .staff-summary-item div:last-child {
   display: flex;
-
   min-width: 0;
-
   flex-direction: column;
   gap: 3px;
 }
@@ -919,7 +1158,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-
   gap: 10px;
 
   margin-top: 8px;
@@ -927,11 +1165,10 @@
 
   border-top: 1px solid var(--border);
 
-  background:
-    var(
-      --background,
-      rgba(127, 127, 127, 0.025)
-    );
+  background: var(
+    --background,
+    rgba(127, 127, 127, 0.025)
+  );
 }
 
 .staff-summary-footer span {
@@ -944,34 +1181,31 @@
   font-size: 10px;
 }
 
+/* =========================================================
+   EMPTY / LOADING / ERROR
+========================================================= */
+
 .staff-empty-state {
   display: flex;
-
+  min-height: 240px;
   align-items: center;
   flex-direction: column;
   justify-content: center;
 
-  min-height: 240px;
-
   padding: 30px;
-
   text-align: center;
 }
 
 .staff-empty-icon {
   display: grid;
-
   width: 46px;
   height: 46px;
-
   margin-bottom: 12px;
-
   place-items: center;
 
   border-radius: 13px;
 
-  background: rgba(22, 163, 74, 0.10);
-
+  background: rgba(22, 163, 74, 0.1);
   color: #16a34a;
 }
 
@@ -987,44 +1221,32 @@
 
 .staff-empty-state span {
   max-width: 350px;
-
   margin-top: 5px;
 
   color: var(--text-muted);
-
   font-size: 10px;
   line-height: 1.5;
 }
 
 .staff-loading {
   display: flex;
-
   min-height: 500px;
-
   align-items: center;
   flex-direction: column;
   justify-content: center;
-
   text-align: center;
 }
 
 .staff-spinner {
   width: 32px;
   height: 32px;
-
   margin-bottom: 18px;
 
   border: 3px solid var(--border);
-
   border-top-color: var(--brand-primary);
-
   border-radius: 50%;
 
-  animation:
-    staff-spin
-    0.8s
-    linear
-    infinite;
+  animation: staff-spin 0.8s linear infinite;
 }
 
 @keyframes staff-spin {
@@ -1036,61 +1258,45 @@
 .staff-loading h2,
 .staff-error h2 {
   margin: 0;
-
   color: var(--text-primary);
-
   font-size: 16px;
 }
 
 .staff-loading p,
 .staff-error p {
   margin: 7px 0 0;
-
   color: var(--text-muted);
-
   font-size: 12px;
 }
 
 .staff-error {
   display: flex;
-
   align-items: center;
-
   gap: 16px;
 
   max-width: 650px;
   min-height: 150px;
 
   margin: 60px auto;
-
   padding: 25px;
 
-  border:
-    1px solid
-    rgba(239, 68, 68, 0.20);
-
+  border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: 16px;
 
   background: var(--surface);
-
   box-shadow: var(--shadow-sm);
 }
 
 .staff-error-icon {
   display: grid;
-
   width: 44px;
   height: 44px;
-
   flex-shrink: 0;
-
   place-items: center;
 
   border-radius: 12px;
 
-  background:
-    rgba(239, 68, 68, 0.10);
-
+  background: rgba(239, 68, 68, 0.1);
   color: #dc2626;
 
   font-size: 20px;
@@ -1099,14 +1305,12 @@
 
 .staff-retry-button {
   margin-top: 14px;
-
   padding: 9px 14px;
 
   border: 0;
   border-radius: 9px;
 
   background: var(--brand-primary);
-
   color: white;
 
   font-size: 11px;
@@ -1115,12 +1319,13 @@
   cursor: pointer;
 }
 
+/* =========================================================
+   DARK MODE
+========================================================= */
+
 [data-theme="dark"] .staff-chart-bar {
   background: var(--brand-primary);
-
-  box-shadow:
-    0 5px 15px
-    rgba(37, 99, 235, 0.18);
+  box-shadow: 0 5px 15px rgba(37, 99, 235, 0.18);
 }
 
 [data-theme="dark"] .staff-donut::before {
@@ -1131,18 +1336,27 @@
   opacity: 0.04;
 }
 
+/* =========================================================
+   RESPONSIVE - 1200px
+========================================================= */
+
 @media (max-width: 1200px) {
   .staff-stat-grid {
-    grid-template-columns:
-      repeat(
-        2,
-        minmax(0, 1fr)
-      );
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .staff-main-grid,
   .staff-bottom-grid {
     grid-template-columns: 1fr;
+  }
+
+  .staff-update-form {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .staff-update-button {
+    width: 100%;
   }
 
   .staff-student-row {
@@ -1156,12 +1370,13 @@
   }
 }
 
+/* =========================================================
+   RESPONSIVE - 850px
+========================================================= */
+
 @media (max-width: 850px) {
   .staff-dashboard {
-    padding:
-      25px
-      20px
-      45px;
+    padding: 25px 20px 45px;
   }
 
   .staff-dashboard-header {
@@ -1179,6 +1394,18 @@
 
   .staff-refresh-button {
     flex-shrink: 0;
+  }
+
+  .staff-update-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .staff-fee-group {
+    min-width: 0;
+  }
+
+  .staff-update-button {
+    grid-column: 1 / -1;
   }
 
   .staff-student-row {
@@ -1200,12 +1427,13 @@
   }
 }
 
+/* =========================================================
+   RESPONSIVE - 600px
+========================================================= */
+
 @media (max-width: 600px) {
   .staff-dashboard {
-    padding:
-      20px
-      14px
-      40px;
+    padding: 20px 14px 40px;
   }
 
   .staff-dashboard-header h1 {
@@ -1234,34 +1462,51 @@
     padding: 17px;
   }
 
+  /* Update form */
+  .staff-update-form {
+    grid-template-columns: 1fr;
+    gap: 13px;
+    padding: 0 17px 18px;
+  }
+
+  .staff-update-button {
+    grid-column: auto;
+    width: 100%;
+  }
+
+  .staff-fee-group {
+    width: 100%;
+  }
+
+  .staff-checkbox-label {
+    width: 100%;
+  }
+
+  .staff-update-success,
+  .staff-update-error {
+    margin-right: 17px;
+    margin-left: 17px;
+  }
+
   .staff-panel-header {
-    padding:
-      18px
-      17px
-      14px;
+    padding: 18px 17px 14px;
   }
 
   .staff-chart {
     --plot-height: 180px;
 
     height: 225px;
-
-    padding:
-      10px
-      15px
-      17px;
+    padding: 10px 15px 17px;
   }
 
   .staff-chart-y {
     width: 28px;
     height: var(--plot-height);
-
     font-size: 9px;
   }
 
   .staff-chart-content {
     height: var(--plot-height);
-
     margin-left: 8px;
   }
 
@@ -1271,18 +1516,9 @@
 
   .staff-chart-bars {
     height: var(--plot-height);
-
-    grid-template-columns:
-      repeat(
-        8,
-        minmax(24px, 1fr)
-      );
-
+    grid-template-columns: repeat(8, minmax(24px, 1fr));
     gap: 4px;
-
-    padding:
-      0
-      3px;
+    padding: 0 3px;
   }
 
   .staff-chart-column {
@@ -1292,7 +1528,6 @@
   .staff-bar-track {
     width: 30px;
     max-width: 30px;
-
     height: var(--plot-height);
   }
 
@@ -1320,10 +1555,7 @@
       auto;
 
     gap: 10px;
-
-    padding:
-      10px
-      15px;
+    padding: 10px 15px;
   }
 
   .staff-student-avatar {
@@ -1358,6 +1590,10 @@
   }
 }
 
+/* =========================================================
+   RESPONSIVE - 400px
+========================================================= */
+
 @media (max-width: 400px) {
   .staff-dashboard-header h1 {
     font-size: 24px;
@@ -1365,6 +1601,10 @@
 
   .staff-stat-value {
     font-size: 27px;
+  }
+
+  .staff-update-form {
+    gap: 11px;
   }
 
   .staff-chart {
@@ -1376,7 +1616,6 @@
   .staff-chart-y {
     width: 26px;
     height: var(--plot-height);
-
     font-size: 9px;
   }
 
@@ -1399,7 +1638,6 @@
   .staff-bar-track {
     width: 24px;
     max-width: 24px;
-
     height: var(--plot-height);
   }
 }

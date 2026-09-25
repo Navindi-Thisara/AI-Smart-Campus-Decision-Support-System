@@ -16,6 +16,11 @@ public interface StudentEligibilityRecordRepository
             Integer semester
     );
 
+    Optional<StudentEligibilityRecord> findByUser_IdAndSemester(
+            Long userId,
+            Integer semester
+    );
+
     @EntityGraph(attributePaths = {"user"})
     List<StudentEligibilityRecord> findAllByOrderBySemesterAsc();
 }

@@ -23,15 +23,21 @@ public class EligibilityController {
 
     @GetMapping
     public EligibilityResponse checkEligibility(
-
-            @RequestParam String studentId,
-
-            @RequestParam Integer semester
+            @RequestParam String studentId
     ) {
 
+        /*
+         * EligibilityService is the single source of truth.
+         *
+         * The student's current semester is obtained from
+         * the database using the academic profile.
+         *
+         * Do not accept semester from the frontend because
+         * that could cause the Staff Dashboard and Student
+         * Eligibility page to evaluate different semesters.
+         */
         return eligibilityService.evaluateEligibility(
-                studentId,
-                semester
+                studentId
         );
     }
 }

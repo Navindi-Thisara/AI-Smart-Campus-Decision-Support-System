@@ -11,6 +11,24 @@ interface LoggedInUser {
   role?: string
 }
 
+interface StudentDashboardResponse {
+  currentSemester?: number
+
+  studentProfile?: {
+    currentSemester?: number
+  }
+
+  profile?: {
+    currentSemester?: number
+  }
+
+  academicProfile?: {
+    currentSemester?: number
+  }
+
+  [key: string]: unknown
+}
+
 interface EligibilityResponse {
   studentId: string
   semester: number
@@ -22,10 +40,25 @@ interface EligibilityResponse {
   explanations: string[]
 }
 
+type RuleStatus =
+  | 'passed'
+  | 'failed'
+  | 'warning'
+  | 'pending'
+
 function Eligibility() {
   const [studentId, setStudentId] = useState('')
 
-  const [semester, setSemester] = useState('2')
+  /*
+   * Semester sent to the eligibility backend.
+   *
+   * It is automatically initialized from the student's
+   * actual current semester stored in the database.
+   */
+  const [semester, setSemester] = useState('')
+
+  const [currentSemester, setCurrentSemester] =
+    useState<number | null>(null)
 
   const [result, setResult] =
     useState<EligibilityResponse | null>(null)
@@ -36,40 +69,162 @@ function Eligibility() {
 
   const [error, setError] = useState('')
 
-  useEffect(() => {
+  // ============================================================
+  // GET CURRENT SEMESTER FROM BACKEND
+  // ============================================================
+
+  const loadStudentInformation = async (
+    loggedStudentId: string
+  ) => {
     try {
-      const storedUser = localStorage.getItem('user')
+      /*
+       * Load the student's actual current semester
+       * from the backend database.
+       *
+       * Example:
+       *
+       * Current Semester = 2
+       *
+       * The eligibility page will therefore evaluate
+       * Semester 2.
+       *
+       * This allows the semester sent to the eligibility
+       * service to match the student's database record.
+       */
+      const response = await fetch(
+        `${BACKEND_URL}/api/students/dashboard?studentId=${encodeURIComponent(
+          loggedStudentId
+        )}`
+      )
 
-      if (!storedUser) {
-        setError(
-          'No logged-in student was found. Please log in again.'
+      if (!response.ok) {
+        throw new Error(
+          'Unable to load the student academic information.'
         )
-        return
       }
 
-      const user: LoggedInUser = JSON.parse(storedUser)
+      const data: StudentDashboardResponse =
+        await response.json()
 
-      if (!user.studentId) {
-        setError(
-          'Student ID is not available for the logged-in user.'
+      /*
+       * Support the possible locations of currentSemester
+       * in the dashboard response.
+       *
+       * The first valid semester value is used.
+       */
+      const possibleCurrentSemesters = [
+        data.currentSemester,
+        data.studentProfile?.currentSemester,
+        data.profile?.currentSemester,
+        data.academicProfile?.currentSemester,
+      ]
+
+      const foundCurrentSemester =
+        possibleCurrentSemesters.find(
+          (value) =>
+            typeof value === 'number' &&
+            Number.isInteger(value) &&
+            value >= 1 &&
+            value <= 8
         )
-        return
+
+      if (
+        typeof foundCurrentSemester !== 'number'
+      ) {
+        throw new Error(
+          'Current semester is not available for the logged-in student.'
+        )
       }
 
-      setStudentId(user.studentId)
+      setCurrentSemester(foundCurrentSemester)
+
+      /*
+       * IMPORTANT:
+       *
+       * Evaluate the student's CURRENT semester.
+       *
+       * Do NOT add +1 here.
+       *
+       * Example:
+       *
+       * Current Semester = 2
+       * Eligibility Record = Semester 2
+       * Attendance = 85%
+       * Fee Paid = true
+       *
+       * Result → ELIGIBLE
+       */
+      setSemester(String(foundCurrentSemester))
     } catch (err) {
       console.error(
-        'Failed to load logged-in user:',
+        'Failed to load student information:',
         err
       )
 
-      setError(
-        'Unable to load the logged-in student information.'
-      )
-    } finally {
-      setLoadingUser(false)
+      throw err
     }
+  }
+
+  // ============================================================
+  // LOAD LOGGED-IN USER
+  // ============================================================
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const storedUser =
+          localStorage.getItem('user')
+
+        if (!storedUser) {
+          setError(
+            'No logged-in student was found. Please log in again.'
+          )
+          return
+        }
+
+        const user: LoggedInUser =
+          JSON.parse(storedUser)
+
+        if (!user.studentId) {
+          setError(
+            'Student ID is not available for the logged-in user.'
+          )
+          return
+        }
+
+        setStudentId(user.studentId)
+
+        /*
+         * Do not use localStorage.currentSemester.
+         *
+         * Load the actual current semester from the
+         * student dashboard backend.
+         */
+        await loadStudentInformation(
+          user.studentId
+        )
+      } catch (err) {
+        console.error(
+          'Failed to load logged-in student:',
+          err
+        )
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Unable to load the logged-in student information.'
+        )
+      } finally {
+        setLoadingUser(false)
+      }
+    }
+
+    loadUser()
   }, [])
+
+  // ============================================================
+  // CHECK ELIGIBILITY
+  // ============================================================
 
   const checkEligibility = async (
     e: React.FormEvent
@@ -79,6 +234,13 @@ function Eligibility() {
     if (!studentId) {
       setError(
         'Student ID is not available. Please log in again.'
+      )
+      return
+    }
+
+    if (!semester) {
+      setError(
+        'Student semester information is not available.'
       )
       return
     }
@@ -132,6 +294,10 @@ function Eligibility() {
     }
   }
 
+  // ============================================================
+  // FINAL ELIGIBILITY STATUS
+  // ============================================================
+
   const getStatusTitle = () => {
     if (!result) return ''
 
@@ -161,7 +327,7 @@ function Eligibility() {
         return 'One or more mandatory eligibility requirements have not been satisfied.'
 
       case 'CONDITIONALLY_ELIGIBLE':
-        return 'Some requirements are satisfied, but additional academic requirements remain incomplete.'
+        return 'Some requirements are satisfied, but additional academic information or requirements remain incomplete.'
 
       default:
         return ''
@@ -186,44 +352,129 @@ function Eligibility() {
     }
   }
 
+  // ============================================================
+  // RULE STATUS
+  // ============================================================
+
   const getRuleStatus = (
     rule:
       | 'profile'
       | 'attendance'
       | 'fee'
       | 'modules'
-  ) => {
+  ): RuleStatus => {
     if (!result) return 'pending'
 
-    const explanations = result.explanations.map(
-      (item) => item.toLowerCase()
-    )
+    const explanations =
+      result.explanations.map(
+        (item) => item.toLowerCase()
+      )
 
     switch (rule) {
+      // --------------------------------------------------------
+      // RULE 01 - ACADEMIC PROFILE
+      // --------------------------------------------------------
+
       case 'profile':
-        return explanations.some((item) =>
-          item.includes('academic profile exists')
-        )
-          ? 'passed'
-          : 'failed'
+        if (
+          explanations.some((item) =>
+            item.includes(
+              'academic profile exists'
+            )
+          )
+        ) {
+          return 'passed'
+        }
+
+        if (
+          explanations.some((item) =>
+            item.includes(
+              'academic profile not found'
+            )
+          )
+        ) {
+          return 'failed'
+        }
+
+        return 'pending'
+
+      // --------------------------------------------------------
+      // RULE 02 - ATTENDANCE
+      // --------------------------------------------------------
 
       case 'attendance':
-        return explanations.some((item) =>
-          item.includes(
-            'attendance requirement satisfied'
+        if (
+          explanations.some((item) =>
+            item.includes(
+              'attendance requirement satisfied'
+            )
           )
-        )
-          ? 'passed'
-          : 'failed'
+        ) {
+          return 'passed'
+        }
+
+        if (
+          explanations.some((item) =>
+            item.includes(
+              'attendance requirement not satisfied'
+            )
+          )
+        ) {
+          return 'failed'
+        }
+
+        if (
+          explanations.some((item) =>
+            item.includes(
+              'attendance information is not available'
+            )
+          )
+        ) {
+          return 'pending'
+        }
+
+        return 'pending'
+
+      // --------------------------------------------------------
+      // RULE 03 - FEE PAYMENT
+      // --------------------------------------------------------
 
       case 'fee':
-        return explanations.some((item) =>
-          item.includes(
-            'semester fee payment requirement satisfied'
+        if (
+          explanations.some((item) =>
+            item.includes(
+              'semester fee payment requirement satisfied'
+            )
           )
-        )
-          ? 'passed'
-          : 'failed'
+        ) {
+          return 'passed'
+        }
+
+        if (
+          explanations.some((item) =>
+            item.includes(
+              'semester fee has not been paid'
+            )
+          )
+        ) {
+          return 'failed'
+        }
+
+        if (
+          explanations.some((item) =>
+            item.includes(
+              'semester fee payment information is not available'
+            )
+          )
+        ) {
+          return 'pending'
+        }
+
+        return 'pending'
+
+      // --------------------------------------------------------
+      // RULE 04 - PREVIOUS REQUIRED MODULES
+      // --------------------------------------------------------
 
       case 'modules':
         if (
@@ -239,11 +490,26 @@ function Eligibility() {
         if (
           explanations.some((item) =>
             item.includes(
-              'previous required module'
+              'no previous required modules exist'
             )
           )
         ) {
-          return 'warning'
+          return 'passed'
+        }
+
+        if (
+          explanations.some((item) =>
+            item.includes(
+              'previous required module not completed'
+            )
+          ) ||
+          explanations.some((item) =>
+            item.includes(
+              'previous required module not passed'
+            )
+          )
+        ) {
+          return 'failed'
         }
 
         return 'pending'
@@ -253,8 +519,144 @@ function Eligibility() {
     }
   }
 
+  // ============================================================
+  // RULE STATUS LABEL
+  // ============================================================
+
+  const getRuleStatusLabel = (
+    status: RuleStatus
+  ) => {
+    switch (status) {
+      case 'passed':
+        return 'Satisfied'
+
+      case 'failed':
+        return 'Not Satisfied'
+
+      case 'warning':
+        return 'Incomplete'
+
+      case 'pending':
+        return 'Not Evaluated'
+
+      default:
+        return 'Not Evaluated'
+    }
+  }
+
+  // ============================================================
+  // RULE STATUS ICON
+  // ============================================================
+
+  const getRuleStatusIcon = (
+    status: RuleStatus
+  ) => {
+    switch (status) {
+      case 'passed':
+        return '✓'
+
+      case 'failed':
+        return '!'
+
+      case 'warning':
+        return '!'
+
+      case 'pending':
+        return '•'
+
+      default:
+        return '•'
+    }
+  }
+
+  // ============================================================
+  // EXPLANATION STATUS
+  // ============================================================
+
+  const getExplanationStatus = (
+    explanation: string
+  ): 'passed' | 'warning' | 'pending' => {
+    const lowerExplanation =
+      explanation.toLowerCase()
+
+    // ----------------------------------------------------------
+    // POSITIVE EXPLANATIONS
+    // ----------------------------------------------------------
+
+    const passed =
+      lowerExplanation.includes(
+        'attendance requirement satisfied'
+      ) ||
+      lowerExplanation.includes(
+        'semester fee payment requirement satisfied'
+      ) ||
+      lowerExplanation.includes(
+        'successfully completed'
+      ) ||
+      lowerExplanation.includes(
+        'academic profile exists'
+      )
+
+    if (passed) {
+      return 'passed'
+    }
+
+    // ----------------------------------------------------------
+    // FAILED / INCOMPLETE EXPLANATIONS
+    // ----------------------------------------------------------
+
+    const warning =
+      lowerExplanation.includes(
+        'not completed'
+      ) ||
+      lowerExplanation.includes(
+        'not passed'
+      ) ||
+      lowerExplanation.includes(
+        'not satisfied'
+      ) ||
+      lowerExplanation.includes(
+        'has not been paid'
+      ) ||
+      lowerExplanation.includes(
+        'not found'
+      )
+
+    if (warning) {
+      return 'warning'
+    }
+
+    // ----------------------------------------------------------
+    // MISSING INFORMATION
+    // ----------------------------------------------------------
+
+    const pending =
+      lowerExplanation.includes(
+        'not available'
+      ) ||
+      lowerExplanation.includes(
+        'not evaluated'
+      ) ||
+      lowerExplanation.includes(
+        'missing'
+      ) ||
+      lowerExplanation.includes(
+        'no previous required modules'
+      )
+
+    if (pending) {
+      return 'pending'
+    }
+
+    return 'pending'
+  }
+
   return (
     <main className="eligibility-page">
+
+      {/* ======================================================
+          HEADER
+          ====================================================== */}
 
       <section className="eligibility-header">
 
@@ -298,7 +700,16 @@ function Eligibility() {
 
       </section>
 
+
+      {/* ======================================================
+          MAIN GRID
+          ====================================================== */}
+
       <section className="eligibility-grid">
+
+        {/* ====================================================
+            ELIGIBILITY CHECK
+            ==================================================== */}
 
         <div className="eligibility-card">
 
@@ -352,6 +763,7 @@ function Eligibility() {
 
               </div>
 
+
               {/* SEMESTER */}
 
               <div className="eligibility-field">
@@ -364,9 +776,14 @@ function Eligibility() {
                   id="semester"
                   value={semester}
                   onChange={(e) =>
-                    setSemester(e.target.value)
+                    setSemester(
+                      e.target.value
+                    )
                   }
-                  disabled={loadingUser || loading}
+                  disabled={
+                    loadingUser ||
+                    loading
+                  }
                 >
 
                   {Array.from(
@@ -374,7 +791,7 @@ function Eligibility() {
                     (_, index) => (
                       <option
                         key={index + 1}
-                        value={index + 1}
+                        value={String(index + 1)}
                       >
                         Semester {index + 1}
                       </option>
@@ -384,12 +801,30 @@ function Eligibility() {
                 </select>
 
                 <small>
-                  Academic semester to evaluate
+                  Automatically selected from your current semester
                 </small>
 
               </div>
 
             </div>
+
+
+            {/* CURRENT / ELIGIBILITY SEMESTER INFORMATION */}
+
+            {currentSemester !== null && (
+              <div
+                style={{
+                  marginTop: '10px',
+                  fontSize: '13px',
+                  opacity: 0.7,
+                }}
+              >
+                Current Semester: {currentSemester}
+                {' • '}
+                Eligibility Semester: {semester}
+              </div>
+            )}
+
 
             {/* SUBMIT BUTTON */}
 
@@ -399,7 +834,8 @@ function Eligibility() {
               disabled={
                 loading ||
                 loadingUser ||
-                !studentId
+                !studentId ||
+                !semester
               }
             >
 
@@ -416,6 +852,7 @@ function Eligibility() {
             </button>
 
           </form>
+
 
           {/* ERROR */}
 
@@ -434,6 +871,11 @@ function Eligibility() {
           )}
 
         </div>
+
+
+        {/* ====================================================
+            RESULT PANEL
+            ==================================================== */}
 
         <div className="eligibility-card result-panel">
 
@@ -457,7 +899,12 @@ function Eligibility() {
 
           </div>
 
+
           {!result ? (
+
+            /* ==================================================
+               EMPTY RESULT
+               ================================================== */
 
             <div className="eligibility-empty">
 
@@ -485,7 +932,13 @@ function Eligibility() {
 
           ) : (
 
+            /* ==================================================
+               RESULT
+               ================================================== */
+
             <div className="eligibility-result">
+
+              {/* STATUS */}
 
               <div
                 className={`eligibility-status ${getStatusClass()}`}
@@ -513,9 +966,15 @@ function Eligibility() {
 
               </div>
 
+
+              {/* DESCRIPTION */}
+
               <p className="eligibility-description">
                 {getStatusDescription()}
               </p>
+
+
+              {/* SUMMARY */}
 
               <div className="eligibility-summary">
 
@@ -559,6 +1018,11 @@ function Eligibility() {
 
               </div>
 
+
+              {/* =================================================
+                  EVALUATION DETAILS
+                  ================================================= */}
+
               <div className="eligibility-explanations">
 
                 <div className="evaluation-heading">
@@ -582,9 +1046,14 @@ function Eligibility() {
 
                 </div>
 
+
+                {/* =================================================
+                    RULE GRID
+                    ================================================= */}
+
                 <div className="eligibility-rule-grid">
 
-                  {/* RULE 01 - PROFILE */}
+                  {/* RULE 01 */}
 
                   <div
                     className={`eligibility-rule-card rule-${getRuleStatus(
@@ -594,10 +1063,9 @@ function Eligibility() {
 
                     <div className="rule-card-icon">
 
-                      {getRuleStatus('profile') ===
-                      'passed'
-                        ? '✓'
-                        : '!'}
+                      {getRuleStatusIcon(
+                        getRuleStatus('profile')
+                      )}
 
                     </div>
 
@@ -620,16 +1088,16 @@ function Eligibility() {
 
                     <span className="rule-card-status">
 
-                      {getRuleStatus('profile') ===
-                      'passed'
-                        ? 'Satisfied'
-                        : 'Failed'}
+                      {getRuleStatusLabel(
+                        getRuleStatus('profile')
+                      )}
 
                     </span>
 
                   </div>
 
-                  {/* RULE 02 - ATTENDANCE */}
+
+                  {/* RULE 02 */}
 
                   <div
                     className={`eligibility-rule-card rule-${getRuleStatus(
@@ -639,10 +1107,9 @@ function Eligibility() {
 
                     <div className="rule-card-icon">
 
-                      {getRuleStatus('attendance') ===
-                      'passed'
-                        ? '✓'
-                        : '!'}
+                      {getRuleStatusIcon(
+                        getRuleStatus('attendance')
+                      )}
 
                     </div>
 
@@ -665,16 +1132,16 @@ function Eligibility() {
 
                     <span className="rule-card-status">
 
-                      {getRuleStatus('attendance') ===
-                      'passed'
-                        ? 'Satisfied'
-                        : 'Not Satisfied'}
+                      {getRuleStatusLabel(
+                        getRuleStatus('attendance')
+                      )}
 
                     </span>
 
                   </div>
 
-                  {/* RULE 03 - FEE */}
+
+                  {/* RULE 03 */}
 
                   <div
                     className={`eligibility-rule-card rule-${getRuleStatus(
@@ -684,10 +1151,9 @@ function Eligibility() {
 
                     <div className="rule-card-icon">
 
-                      {getRuleStatus('fee') ===
-                      'passed'
-                        ? '✓'
-                        : '!'}
+                      {getRuleStatusIcon(
+                        getRuleStatus('fee')
+                      )}
 
                     </div>
 
@@ -710,16 +1176,16 @@ function Eligibility() {
 
                     <span className="rule-card-status">
 
-                      {getRuleStatus('fee') ===
-                      'passed'
-                        ? 'Satisfied'
-                        : 'Not Satisfied'}
+                      {getRuleStatusLabel(
+                        getRuleStatus('fee')
+                      )}
 
                     </span>
 
                   </div>
 
-                  {/* RULE 04 - PREVIOUS MODULES */}
+
+                  {/* RULE 04 */}
 
                   <div
                     className={`eligibility-rule-card rule-${getRuleStatus(
@@ -729,10 +1195,9 @@ function Eligibility() {
 
                     <div className="rule-card-icon">
 
-                      {getRuleStatus('modules') ===
-                      'passed'
-                        ? '✓'
-                        : '!'}
+                      {getRuleStatusIcon(
+                        getRuleStatus('modules')
+                      )}
 
                     </div>
 
@@ -756,19 +1221,20 @@ function Eligibility() {
 
                     <span className="rule-card-status">
 
-                      {getRuleStatus('modules') ===
-                      'passed'
-                        ? 'Satisfied'
-                        : getRuleStatus('modules') ===
-                            'warning'
-                          ? 'Incomplete'
-                          : 'Not Evaluated'}
+                      {getRuleStatusLabel(
+                        getRuleStatus('modules')
+                      )}
 
                     </span>
 
                   </div>
 
                 </div>
+
+
+                {/* =================================================
+                    DECISION EXPLANATION
+                    ================================================= */}
 
                 <div className="eligibility-explanation-details">
 
@@ -789,49 +1255,29 @@ function Eligibility() {
 
                   </div>
 
+
                   <div className="eligibility-rules">
 
                     {result.explanations.map(
-                      (explanation, index) => {
+                      (
+                        explanation,
+                        index
+                      ) => {
 
-                        const lowerExplanation =
-                          explanation.toLowerCase()
-
-                        const passed =
-                          lowerExplanation.includes(
-                            'satisfied'
-                          ) ||
-                          lowerExplanation.includes(
-                            'successfully completed'
-                          ) ||
-                          lowerExplanation.includes(
-                            'exists'
-                          )
-
-                        const warning =
-                          lowerExplanation.includes(
-                            'not completed'
-                          ) ||
-                          lowerExplanation.includes(
-                            'not passed'
-                          ) ||
-                          lowerExplanation.includes(
-                            'not satisfied'
-                          ) ||
-                          lowerExplanation.includes(
-                            'has not been paid'
-                          ) ||
-                          lowerExplanation.includes(
-                            'missing'
+                        const explanationStatus =
+                          getExplanationStatus(
+                            explanation
                           )
 
                         return (
                           <div
                             key={index}
                             className={`eligibility-rule ${
-                              passed
+                              explanationStatus ===
+                              'passed'
                                 ? 'rule-passed'
-                                : warning
+                                : explanationStatus ===
+                                    'warning'
                                   ? 'rule-warning'
                                   : ''
                             }`}
@@ -839,9 +1285,11 @@ function Eligibility() {
 
                             <span className="rule-icon">
 
-                              {passed
+                              {explanationStatus ===
+                              'passed'
                                 ? '✓'
-                                : warning
+                                : explanationStatus ===
+                                    'warning'
                                   ? '!'
                                   : '•'}
 
@@ -870,6 +1318,11 @@ function Eligibility() {
 
       </section>
 
+
+      {/* ========================================================
+          INFORMATION SECTION
+          ======================================================== */}
+
       <section className="eligibility-information">
 
         <div className="eligibility-information-main">
@@ -893,6 +1346,7 @@ function Eligibility() {
           </div>
 
         </div>
+
 
         <div className="eligibility-features">
 

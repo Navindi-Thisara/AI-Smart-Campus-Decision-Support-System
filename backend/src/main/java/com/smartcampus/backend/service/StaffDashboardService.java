@@ -4,13 +4,12 @@ import com.smartcampus.backend.dto.EligibilityResponse;
 import com.smartcampus.backend.dto.StaffDashboardResponse;
 import com.smartcampus.backend.entity.StudentAcademicProfile;
 import com.smartcampus.backend.entity.StudentEligibilityRecord;
-import com.smartcampus.backend.entity.StudentResult;
 import com.smartcampus.backend.entity.StudentSemesterGpa;
 import com.smartcampus.backend.entity.User;
 import com.smartcampus.backend.repository.StudentAcademicProfileRepository;
 import com.smartcampus.backend.repository.StudentEligibilityRecordRepository;
-import com.smartcampus.backend.repository.StudentResultRepository;
 import com.smartcampus.backend.repository.StudentSemesterGpaRepository;
+import com.smartcampus.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -24,24 +23,24 @@ import java.util.Map;
 @Service
 public class StaffDashboardService {
 
-    private static final BigDecimal MIN_ATTENDANCE =
-            new BigDecimal("80.00");
-
     private final StudentAcademicProfileRepository profileRepository;
     private final StudentSemesterGpaRepository gpaRepository;
     private final StudentEligibilityRecordRepository eligibilityRepository;
-    private final StudentResultRepository resultRepository;
+    private final EligibilityService eligibilityService;
+    private final UserRepository userRepository;
 
     public StaffDashboardService(
             StudentAcademicProfileRepository profileRepository,
             StudentSemesterGpaRepository gpaRepository,
             StudentEligibilityRecordRepository eligibilityRepository,
-            StudentResultRepository resultRepository
+            EligibilityService eligibilityService,
+            UserRepository userRepository
     ) {
         this.profileRepository = profileRepository;
         this.gpaRepository = gpaRepository;
         this.eligibilityRepository = eligibilityRepository;
-        this.resultRepository = resultRepository;
+        this.eligibilityService = eligibilityService;
+        this.userRepository = userRepository;
     }
 
     public StaffDashboardResponse getDashboard() {
@@ -53,13 +52,6 @@ public class StaffDashboardService {
 
         Map<Long, Map<Integer, BigDecimal>> gpaByStudent =
                 buildGpaMap();
-
-        Map<Long, Map<Integer, StudentEligibilityRecord>>
-                eligibilityByStudent =
-                buildEligibilityMap();
-
-        Map<Long, Map<String, StudentResult>> resultsByStudent =
-                buildResultMap();
 
         List<StaffDashboardResponse.SemesterPerformance>
                 semesterPerformance =
@@ -73,6 +65,10 @@ public class StaffDashboardService {
                 attentionStudents =
                 new ArrayList<>();
 
+        /*
+         * Evaluate every student using the same EligibilityService
+         * used by the Student Eligibility page.
+         */
         for (StudentAcademicProfile profile : profiles) {
 
             User user = profile.getUser();
@@ -88,24 +84,26 @@ public class StaffDashboardService {
                 continue;
             }
 
-            StudentEligibilityRecord eligibilityRecord =
-                    eligibilityByStudent
-                            .getOrDefault(user.getId(), Map.of())
-                            .get(currentSemester);
-
-            Map<String, StudentResult> studentResults =
-                    resultsByStudent.getOrDefault(
-                            user.getId(),
-                            Map.of()
+            /*
+             * SINGLE SOURCE OF TRUTH
+             *
+             * EligibilityService determines the current semester
+             * directly from the student's academic profile.
+             */
+            EligibilityResponse eligibilityResponse =
+                    eligibilityService.evaluateEligibility(
+                            user.getStudentId()
                     );
 
             String status =
-                    calculateEligibilityStatus(
-                            profile,
-                            eligibilityRecord,
-                            studentResults
-                    );
+                    eligibilityResponse != null
+                            ? eligibilityResponse.getStatus()
+                            : "CONDITIONALLY_ELIGIBLE";
 
+            /*
+             * Count students according to the actual
+             * eligibility result.
+             */
             switch (status) {
 
                 case "ELIGIBLE" ->
@@ -116,13 +114,37 @@ public class StaffDashboardService {
 
                 case "NOT_ELIGIBLE" ->
                         notEligibleStudents++;
+
+                default ->
+                        conditionallyEligibleStudents++;
             }
 
+            /*
+             * Retrieve the eligibility record for the student's
+             * actual current semester.
+             *
+             * This is only used for displaying attendance and
+             * fee information.
+             */
+            StudentEligibilityRecord eligibilityRecord =
+                    eligibilityRepository
+                            .findByUser_IdAndSemester(
+                                    user.getId(),
+                                    currentSemester
+                            )
+                            .orElse(null);
+
+            /*
+             * Add only students who require attention.
+             */
             if (!"ELIGIBLE".equals(status)) {
 
                 BigDecimal currentSgpa =
                         gpaByStudent
-                                .getOrDefault(user.getId(), Map.of())
+                                .getOrDefault(
+                                        user.getId(),
+                                        Map.of()
+                                )
                                 .get(currentSemester);
 
                 BigDecimal attendance =
@@ -138,9 +160,7 @@ public class StaffDashboardService {
 
                 String reason =
                         buildAttentionReason(
-                                profile,
-                                eligibilityRecord,
-                                studentResults
+                                eligibilityResponse
                         );
 
                 attentionStudents.add(
@@ -162,6 +182,13 @@ public class StaffDashboardService {
             }
         }
 
+        /*
+         * Highest-priority students appear first.
+         *
+         * NOT_ELIGIBLE
+         * CONDITIONALLY_ELIGIBLE
+         * ELIGIBLE
+         */
         attentionStudents.sort(
                 Comparator
                         .comparingInt(
@@ -177,6 +204,9 @@ public class StaffDashboardService {
                         )
         );
 
+        /*
+         * Display a maximum of 10 students requiring attention.
+         */
         List<StaffDashboardResponse.StudentAttention>
                 topAttentionStudents =
                 attentionStudents.stream()
@@ -197,6 +227,11 @@ public class StaffDashboardService {
         );
     }
 
+    /**
+     * Builds:
+     *
+     * studentId -> semester -> SGPA
+     */
     private Map<Long, Map<Integer, BigDecimal>>
     buildGpaMap() {
 
@@ -228,68 +263,9 @@ public class StaffDashboardService {
         return result;
     }
 
-    private Map<Long, Map<Integer, StudentEligibilityRecord>>
-    buildEligibilityMap() {
-
-        Map<Long, Map<Integer, StudentEligibilityRecord>>
-                result =
-                new HashMap<>();
-
-        List<StudentEligibilityRecord> records =
-                eligibilityRepository
-                        .findAllByOrderBySemesterAsc();
-
-        for (StudentEligibilityRecord record : records) {
-
-            if (record.getUser() == null
-                    || record.getSemester() == null) {
-                continue;
-            }
-
-            result
-                    .computeIfAbsent(
-                            record.getUser().getId(),
-                            ignored -> new HashMap<>()
-                    )
-                    .put(
-                            record.getSemester(),
-                            record
-                    );
-        }
-
-        return result;
-    }
-
-    private Map<Long, Map<String, StudentResult>>
-    buildResultMap() {
-
-        Map<Long, Map<String, StudentResult>> result =
-                new HashMap<>();
-
-        List<StudentResult> records =
-                resultRepository.findAllByOrderBySemesterAscCourseCodeAsc();
-
-        for (StudentResult studentResult : records) {
-
-            if (studentResult.getUser() == null
-                    || studentResult.getCourseCode() == null) {
-                continue;
-            }
-
-            result
-                    .computeIfAbsent(
-                            studentResult.getUser().getId(),
-                            ignored -> new HashMap<>()
-                    )
-                    .put(
-                            studentResult.getCourseCode(),
-                            studentResult
-                    );
-        }
-
-        return result;
-    }
-
+    /**
+     * Calculates the average SGPA for each semester.
+     */
     private List<StaffDashboardResponse.SemesterPerformance>
     calculateSemesterPerformance() {
 
@@ -306,7 +282,13 @@ public class StaffDashboardService {
                 continue;
             }
 
-            if (record.getSgpa().compareTo(BigDecimal.ZERO) < 0
+            /*
+             * Only valid SGPA values between 0.00 and 4.00
+             * are included.
+             */
+            if (record.getSgpa().compareTo(
+                    BigDecimal.ZERO
+            ) < 0
                     || record.getSgpa().compareTo(
                     new BigDecimal("4.00")
             ) > 0) {
@@ -352,12 +334,17 @@ public class StaffDashboardService {
                 .toList();
     }
 
+    /**
+     * Calculates the overall average SGPA.
+     */
     private BigDecimal calculateOverallAverageSgpa() {
 
         List<StudentSemesterGpa> records =
                 gpaRepository.findAll();
 
-        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal total =
+                BigDecimal.ZERO;
+
         long count = 0;
 
         for (StudentSemesterGpa record : records) {
@@ -366,18 +353,26 @@ public class StaffDashboardService {
                 continue;
             }
 
-            if (record.getSgpa().compareTo(BigDecimal.ZERO) < 0
+            /*
+             * Ignore invalid SGPA values.
+             */
+            if (record.getSgpa().compareTo(
+                    BigDecimal.ZERO
+            ) < 0
                     || record.getSgpa().compareTo(
                     new BigDecimal("4.00")
             ) > 0) {
                 continue;
             }
 
-            total = total.add(record.getSgpa());
+            total =
+                    total.add(record.getSgpa());
+
             count++;
         }
 
         if (count == 0) {
+
             return BigDecimal.ZERO.setScale(
                     4,
                     RoundingMode.HALF_UP
@@ -391,125 +386,87 @@ public class StaffDashboardService {
         );
     }
 
-    private String calculateEligibilityStatus(
-            StudentAcademicProfile profile,
-            StudentEligibilityRecord record,
-            Map<String, StudentResult> results
-    ) {
-
-        if (profile == null) {
-            return "NOT_ELIGIBLE";
-        }
-
-        Integer semester =
-                profile.getCurrentSemester();
-
-        if (record == null) {
-            return "CONDITIONALLY_ELIGIBLE";
-        }
-
-        boolean attendancePassed =
-                record.getAttendancePercentage() != null
-                        && record
-                        .getAttendancePercentage()
-                        .compareTo(MIN_ATTENDANCE) >= 0;
-
-        boolean feePassed =
-                Boolean.TRUE.equals(
-                        record.getFeePaid()
-                );
-
-        boolean previousModulesPassed =
-                checkPreviousModules(
-                        profile,
-                        semester,
-                        results
-                );
-
-        if (attendancePassed
-                && feePassed
-                && previousModulesPassed) {
-
-            return "ELIGIBLE";
-        }
-
-        if (!attendancePassed || !feePassed) {
-            return "NOT_ELIGIBLE";
-        }
-
-        return "CONDITIONALLY_ELIGIBLE";
-    }
-
-    private boolean checkPreviousModules(
-            StudentAcademicProfile profile,
-            Integer currentSemester,
-            Map<String, StudentResult> results
-    ) {
-
-        if (currentSemester == null
-                || currentSemester <= 1) {
-            return true;
-        }
-
-        return true;
-    }
-
+    /**
+     * Builds the reason displayed in the Staff Dashboard.
+     *
+     * The explanations come directly from EligibilityService,
+     * so the Staff Dashboard and Student Eligibility page use
+     * the same eligibility reasoning.
+     */
     private String buildAttentionReason(
-            StudentAcademicProfile profile,
-            StudentEligibilityRecord record,
-            Map<String, StudentResult> results
+            EligibilityResponse eligibilityResponse
     ) {
 
-        List<String> reasons =
-                new ArrayList<>();
-
-        if (record == null) {
-
-            reasons.add(
-                    "Attendance and fee information is missing"
-            );
-
-        } else {
-
-            if (record.getAttendancePercentage() == null) {
-
-                reasons.add(
-                        "Attendance information is missing"
-                );
-
-            } else if (
-                    record.getAttendancePercentage()
-                            .compareTo(MIN_ATTENDANCE) < 0
-            ) {
-
-                reasons.add(
-                        "Attendance below 80%"
-                );
-            }
-
-            if (!Boolean.TRUE.equals(
-                    record.getFeePaid()
-            )) {
-
-                reasons.add(
-                        "Semester fee not paid"
-                );
-            }
+        if (eligibilityResponse == null) {
+            return "Academic eligibility requires review";
         }
 
-        if (reasons.isEmpty()) {
+        List<String> explanations =
+                eligibilityResponse.getExplanations();
 
-            reasons.add(
-                    "Academic eligibility requires review"
+        if (explanations == null
+                || explanations.isEmpty()) {
+
+            return "Academic eligibility requires review";
+        }
+
+        /*
+         * Remove explanations that only describe successful
+         * checks. Keep the actual problems.
+         */
+        List<String> relevantReasons =
+                explanations.stream()
+                        .filter(explanation ->
+                                explanation != null
+                                        && !explanation.isBlank()
+                                        && !isSuccessfulExplanation(
+                                                explanation
+                                        )
+                        )
+                        .toList();
+
+        if (!relevantReasons.isEmpty()) {
+
+            return String.join(
+                    " • ",
+                    relevantReasons
             );
         }
 
-        return String.join(
-                " • ",
-                reasons
+        return "Academic eligibility requires review";
+    }
+
+    /**
+     * Identifies explanations that indicate a successful check.
+     */
+    private boolean isSuccessfulExplanation(
+            String explanation
+    ) {
+
+        String text =
+                explanation.toLowerCase();
+
+        return text.contains(
+                "academic profile exists"
+        )
+                || text.contains(
+                "attendance requirement satisfied"
+        )
+                || text.contains(
+                "semester fee payment requirement satisfied"
+        )
+                || text.contains(
+                "all required modules from previous semesters"
+        )
+                || text.contains(
+                "no previous required modules exist"
         );
     }
 
+    /**
+     * Determines the display priority of students requiring
+     * attention.
+     */
     private int attentionPriority(
             StaffDashboardResponse.StudentAttention student
     ) {
@@ -527,5 +484,98 @@ public class StaffDashboardService {
         }
 
         return 1;
+    }
+
+    /**
+     * Updates attendance and fee payment information
+     * for a student.
+     *
+     * This method is used by the Staff Dashboard.
+     */
+    public void updateEligibilityData(
+            String studentId,
+            Integer semester,
+            BigDecimal attendancePercentage,
+            Boolean feePaid
+    ) {
+
+        if (studentId == null || studentId.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Student ID is required"
+            );
+        }
+
+        if (semester == null || semester < 1) {
+            throw new IllegalArgumentException(
+                    "Valid semester is required"
+            );
+        }
+
+        if (attendancePercentage == null
+                || attendancePercentage.compareTo(
+                        BigDecimal.ZERO
+                ) < 0
+                || attendancePercentage.compareTo(
+                        new BigDecimal("100.00")
+                ) > 0) {
+
+            throw new IllegalArgumentException(
+                    "Attendance must be between 0 and 100"
+            );
+        }
+
+        if (feePaid == null) {
+            throw new IllegalArgumentException(
+                    "Fee payment status is required"
+            );
+        }
+
+        /*
+         * Find the student directly using student ID.
+         *
+         * This avoids loading all academic profiles just
+         * to locate one student.
+         */
+        User user =
+                userRepository
+                        .findByStudentId(studentId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Student not found: "
+                                                + studentId
+                                )
+                        );
+
+        /*
+         * Find the existing eligibility record or create
+         * a new one if it does not exist.
+         */
+        StudentEligibilityRecord record =
+                eligibilityRepository
+                        .findByUser_IdAndSemester(
+                                user.getId(),
+                                semester
+                        )
+                        .orElseGet(() -> {
+
+                            StudentEligibilityRecord newRecord =
+                                    new StudentEligibilityRecord();
+
+                            newRecord.setUser(user);
+                            newRecord.setSemester(semester);
+
+                            return newRecord;
+                        });
+
+        /*
+         * Update staff-managed eligibility information.
+         */
+        record.setAttendancePercentage(
+                attendancePercentage
+        );
+
+        record.setFeePaid(feePaid);
+
+        eligibilityRepository.save(record);
     }
 }

@@ -1522,7 +1522,6 @@ function StudentDashboard() {
         currentSemester,
     )
 
-  
   const maxDegreeYear =
     selectedDegree?.durationYears
       ? Math.min(
@@ -1537,7 +1536,6 @@ function StudentDashboard() {
         year <= maxDegreeYear,
     )
 
-  
   const availableSemesters =
     typeof currentYear ===
     'number'
@@ -1684,8 +1682,6 @@ function StudentDashboard() {
     }
   }, [degreeId])
 
-  
-
   const handleFacultyChange =
     (value: string) => {
       setFacultyId(value)
@@ -1821,6 +1817,14 @@ function StudentDashboard() {
         return
       }
 
+      /*
+       * Current profile validation remains
+       * strict. A current semester must
+       * belong to the selected current year.
+       *
+       * Example:
+       * Year 2 -> Semester 3 or 4 only.
+       */
       if (
         !semesterBelongsToYear(
           numericSemester,
@@ -1889,7 +1893,11 @@ function StudentDashboard() {
           normalizedSavedProfile,
         )
 
-
+        /*
+         * Keep previously saved semester
+         * records that are still valid for
+         * the student's current semester.
+         */
         setSemesterRecords(
           previous =>
             previous.filter(
@@ -1899,7 +1907,18 @@ function StudentDashboard() {
             ),
         )
 
-       
+        /*
+         * Keep SGPA values for all
+         * previously completed/current
+         * semesters.
+         *
+         * IMPORTANT:
+         * Do not filter these by currentYear.
+         *
+         * Example:
+         * Year 2 / Semester 4
+         * keeps S1, S2, S3 and S4.
+         */
         setSgpaValues(
           previous => {
             const next: Record<
@@ -1928,7 +1947,10 @@ function StudentDashboard() {
           },
         )
 
-        
+        /*
+         * Keep grade records for all
+         * completed/current semesters.
+         */
         setGrades(
           previous => {
             const next: Record<
@@ -1957,15 +1979,12 @@ function StudentDashboard() {
           },
         )
 
-       
         setModulesBySemester({})
 
-        
         setSelectedGradeSemester(
           numericSemester,
         )
 
-        
         await loadModules(
           normalizedSavedProfile.degreeId ||
             degreeId,
@@ -1977,7 +1996,6 @@ function StudentDashboard() {
           `Academic profile saved successfully: Year ${numericYear}, Semester ${numericSemester}.`,
         )
 
-       
         setProfileOpen(false)
       } catch (err) {
         setError(
@@ -2000,7 +2018,6 @@ function StudentDashboard() {
       ? currentSemester
       : 0
 
- 
   useEffect(() => {
     if (
       maximumAllowedSemester > 0 &&
@@ -2020,7 +2037,10 @@ function StudentDashboard() {
     async (
       semester: number,
     ) => {
-      
+      /*
+       * Previous semesters are allowed.
+       * Only future semesters are blocked.
+       */
       if (
         !degreeId ||
         semester >
@@ -2072,7 +2092,11 @@ function StudentDashboard() {
     courseCode: string,
     grade: string,
   ) => {
-    
+    /*
+     * Students may edit grades for
+     * previous semesters and the current
+     * semester, but never future ones.
+     */
     if (
       semester >
       maximumAllowedSemester
@@ -2153,6 +2177,10 @@ function StudentDashboard() {
         return
       }
 
+      /*
+       * Future semesters are not allowed.
+       * Previous semesters ARE allowed.
+       */
       if (
         selectedGradeSemester >
         maximumAllowedSemester
@@ -2184,26 +2212,24 @@ function StudentDashboard() {
 
       try {
         await apiRequest(
-        `/api/students/results?studentId=${encodeURIComponent(studentId)}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify({
-            studentId,
-            degreeId,
-            semester: selectedGradeSemester,
-            grades: semesterGrades,
-          }),
-        },
-      )
+          `/api/students/results?studentId=${encodeURIComponent(studentId)}`,
+          {
+            method: 'PUT',
+            body: JSON.stringify({
+              studentId,
+              degreeId,
+              semester: selectedGradeSemester,
+              grades: semesterGrades,
+            }),
+          },
+        )
 
         setMessage(
           `Semester ${selectedGradeSemester} grades saved successfully.`,
         )
 
-        
         await loadDashboard()
 
-        
         setSelectedGradeSemester(
           Math.min(
             selectedGradeSemester,
@@ -2229,7 +2255,11 @@ function StudentDashboard() {
     semester: number,
     value: string,
   ) => {
-   
+    /*
+     * Allow SGPA editing for previous
+     * semesters and the current semester.
+     * Only future semesters are blocked.
+     */
     if (
       maximumAllowedSemester > 0 &&
       semester >
@@ -2238,7 +2268,6 @@ function StudentDashboard() {
       return
     }
 
-    
     if (
       value !== '' &&
       !/^\d*\.?\d{0,4}$/.test(
@@ -2265,7 +2294,10 @@ function StudentDashboard() {
     async (
       semester: number,
     ) => {
-      
+      /*
+       * A profile must exist before
+       * academic records can be saved.
+       */
       if (
         maximumAllowedSemester <=
         0
@@ -2276,27 +2308,42 @@ function StudentDashboard() {
         return
       }
 
+      /*
+       * IMPORTANT FIX:
+       *
+       * Do NOT check whether the semester
+       * belongs to currentYear here.
+       *
+       * currentYear describes the student's
+       * CURRENT academic year only.
+       *
+       * A Year 2 / Semester 4 student must
+       * still be able to save:
+       *
+       * S1 -> Year 1
+       * S2 -> Year 1
+       * S3 -> Year 2
+       * S4 -> Year 2
+       *
+       * Therefore, the only restriction here
+       * is that the semester cannot be in
+       * the future.
+       */
+      if (
+        !isValidSemester(semester)
+      ) {
+        setError(
+          `Semester ${semester} is invalid.`,
+        )
+        return
+      }
+
       if (
         semester >
         maximumAllowedSemester
       ) {
         setError(
           `You cannot save SGPA for Semester ${semester}. Your current semester is Semester ${maximumAllowedSemester}.`,
-        )
-        return
-      }
-
-      
-      if (
-        typeof currentYear ===
-          'number' &&
-        !semesterBelongsToYear(
-          semester,
-          currentYear,
-        )
-      ) {
-        setError(
-          `Semester ${semester} does not belong to Year ${currentYear}.`,
         )
         return
       }
@@ -2406,9 +2453,7 @@ function StudentDashboard() {
           previous => ({
             ...previous,
             [semester]:
-              String(
-                roundedSGPA,
-              ),
+              roundedSGPA.toFixed(4),
           }),
         )
 
@@ -2416,10 +2461,17 @@ function StudentDashboard() {
           `Semester ${semester} SGPA saved successfully.`,
         )
 
-       
+        /*
+         * Reload dashboard so the UI stays
+         * synchronized with the backend.
+         */
         await loadDashboard()
 
-        
+        /*
+         * Keep the selected grade semester
+         * within the student's current
+         * semester range.
+         */
         setSelectedGradeSemester(
           Math.min(
             semester,
@@ -2444,7 +2496,6 @@ function StudentDashboard() {
      GPA CALCULATIONS
      ======================================================= */
 
- 
   const validSemesterRecords =
     useMemo(() => {
       if (
@@ -2475,7 +2526,6 @@ function StudentDashboard() {
       maximumAllowedSemester,
     ])
 
-  
   const currentSGPA =
     useMemo(() => {
       if (
@@ -2511,7 +2561,6 @@ function StudentDashboard() {
       maximumAllowedSemester,
     ])
 
-  
   const overallFGPA =
     useMemo(() => {
       const values =
@@ -2569,7 +2618,6 @@ function StudentDashboard() {
 
   const chartMax = 4
 
-  
   const chartRecords =
     SEMESTERS
       .filter(
@@ -2632,8 +2680,6 @@ function StudentDashboard() {
       </main>
     )
   }
-
-  
 
   return (
     <main className="student-dashboard">
@@ -3310,12 +3356,6 @@ function StudentDashboard() {
                   {chartRecords.map(
                     item => {
 
-                      /*
-                       * 0.00 = 0%
-                       * 2.00 = 50%
-                       * 3.00 = 75%
-                       * 4.00 = 100%
-                       */
                       const height =
                         item.sgpa ===
                         null
@@ -3404,9 +3444,9 @@ function StudentDashboard() {
                 </h2>
 
                 <p>
-                  You can only enter SGPA for
-                  your current or previously
-                  completed semesters.
+                  You can enter SGPA for your
+                  current or previously completed
+                  semesters.
                 </p>
               </div>
 
