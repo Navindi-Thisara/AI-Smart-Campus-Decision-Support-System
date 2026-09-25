@@ -213,7 +213,6 @@ async function apiRequest<T>(
           message
       }
     } catch {
-      // Keep default message.
     }
 
     throw new Error(message)
@@ -549,9 +548,6 @@ function normalizeSemesterRecords(
       const sgpa =
         Number(sgpaRaw)
 
-      /*
-       * Validate semester.
-       */
       if (
         !Number.isInteger(semester) ||
         !isValidSemester(semester)
@@ -559,9 +555,6 @@ function normalizeSemesterRecords(
         return null
       }
 
-      /*
-       * Validate SGPA.
-       */
       if (
         !Number.isFinite(sgpa) ||
         sgpa < 0 ||
@@ -570,13 +563,6 @@ function normalizeSemesterRecords(
         return null
       }
 
-      /*
-       * Credits are optional.
-       *
-       * Important:
-       * Do not create a required `credits`
-       * property when no credits value exists.
-       */
       const rawCredits =
         record.credits
 
@@ -585,10 +571,6 @@ function normalizeSemesterRecords(
           ? undefined
           : Number(rawCredits)
 
-      /*
-       * Only include credits when a valid
-       * value actually exists.
-       */
       if (
         credits !== undefined &&
         !Number.isFinite(credits)
@@ -622,13 +604,6 @@ function normalizeSemesterRecords(
     },
   )
 
-  /*
-   * Remove invalid records.
-   *
-   * `record is SemesterRecord`
-   * is now valid because the array
-   * explicitly contains SemesterRecord | null.
-   */
   return normalized
     .filter(
       (
@@ -954,16 +929,8 @@ function Icon({
 }
 
 function StudentDashboard() {
-  /* -------------------------------------------------------
-     USER
-     ------------------------------------------------------- */
-
   const [user, setUser] =
     useState<StoredUser | null>(null)
-
-  /* -------------------------------------------------------
-     REFERENCE DATA
-     ------------------------------------------------------- */
 
   const [faculties, setFaculties] =
     useState<Faculty[]>([])
@@ -980,10 +947,6 @@ function StudentDashboard() {
     referenceError,
     setReferenceError,
   ] = useState('')
-
-  /* -------------------------------------------------------
-     PROFILE
-     ------------------------------------------------------- */
 
   const [profile, setProfile] =
     useState<StudentProfile | null>(
@@ -1007,10 +970,6 @@ function StudentDashboard() {
     setCurrentSemester,
   ] = useState<number | ''>('')
 
-  /* -------------------------------------------------------
-     MODULES
-     ------------------------------------------------------- */
-
   const [
     modulesBySemester,
     setModulesBySemester,
@@ -1023,10 +982,6 @@ function StudentDashboard() {
     setLoadingModules,
   ] = useState(false)
 
-  /* -------------------------------------------------------
-     GRADES
-     ------------------------------------------------------- */
-
   const [grades, setGrades] =
     useState<
       Record<number, GradeEntry[]>
@@ -1037,10 +992,6 @@ function StudentDashboard() {
     setSelectedGradeSemester,
   ] = useState<number>(1)
 
-  /* -------------------------------------------------------
-     SGPA
-     ------------------------------------------------------- */
-
   const [sgpaValues, setSgpaValues] =
     useState<
       Record<number, string>
@@ -1050,10 +1001,6 @@ function StudentDashboard() {
     semesterRecords,
     setSemesterRecords,
   ] = useState<SemesterRecord[]>([])
-
-  /* -------------------------------------------------------
-     UI
-     ------------------------------------------------------- */
 
   const [loading, setLoading] =
     useState(true)
@@ -1091,10 +1038,6 @@ function StudentDashboard() {
   const [error, setError] =
     useState('')
 
-  /* =======================================================
-     LOAD USER
-     ======================================================= */
-
   useEffect(() => {
     const storedUser =
       localStorage.getItem('user')
@@ -1119,10 +1062,6 @@ function StudentDashboard() {
 
   const studentId =
     user?.studentId || ''
-
-  /* =======================================================
-     LOAD REFERENCE DATA
-     ======================================================= */
 
   const loadReferenceData =
     useCallback(
@@ -1245,10 +1184,6 @@ function StudentDashboard() {
     loadReferenceData()
   }, [loadReferenceData])
 
-  /* =======================================================
-     APPLY PROFILE LOCALLY
-     ======================================================= */
-
   const applyProfile =
     useCallback(
       (
@@ -1297,10 +1232,6 @@ function StudentDashboard() {
       [],
     )
 
-  /* =======================================================
-     LOAD DASHBOARD
-     ======================================================= */
-
   const loadDashboard =
     useCallback(
       async () => {
@@ -1329,19 +1260,9 @@ function StudentDashboard() {
             data.profile,
           )
 
-          /*
-           * HARD RULE:
-           *
-           * A student can only have/view
-           * academic records up to their
-           * CURRENT semester.
-           */
           const loadedCurrentSemester =
             data.profile?.currentSemester
 
-          /* -------------------------------------------------
-             SEMESTER RECORDS
-             ------------------------------------------------- */
 
           const normalizedRecords =
             data.semesterRecords
@@ -1367,10 +1288,6 @@ function StudentDashboard() {
             normalizedRecords,
           )
 
-          /* -------------------------------------------------
-             SGPA VALUES
-             ------------------------------------------------- */
-
           const sgpaMap:
             Record<number, string> =
             {}
@@ -1388,10 +1305,6 @@ function StudentDashboard() {
           setSgpaValues(
             sgpaMap,
           )
-
-          /* -------------------------------------------------
-             GRADES
-             ------------------------------------------------- */
 
           const loadedGrades =
             data.grades || {}
@@ -1437,10 +1350,6 @@ function StudentDashboard() {
           setGrades(
             filteredGrades,
           )
-
-          /* -------------------------------------------------
-             SELECT GRADE SEMESTER
-             ------------------------------------------------- */
 
           const semestersWithGrades =
             Object.keys(
@@ -1515,10 +1424,6 @@ function StudentDashboard() {
     loadDashboard()
   }, [loadDashboard])
 
-  /* =======================================================
-     FILTER DEGREES
-     ======================================================= */
-
   const filteredDegrees =
     useMemo(() => {
       if (!facultyId) {
@@ -1533,10 +1438,6 @@ function StudentDashboard() {
           String(facultyId),
       )
     }, [degrees, facultyId])
-
-  /* =======================================================
-     SELECTED FACULTY / DEGREE
-     ======================================================= */
 
   const selectedFaculty =
     useMemo(
@@ -1563,10 +1464,6 @@ function StudentDashboard() {
         ),
       [degrees, degreeId],
     )
-
-  /* =======================================================
-     PROFILE VALIDATION
-     ======================================================= */
 
   const profileComplete =
     Boolean(
@@ -1603,10 +1500,6 @@ function StudentDashboard() {
             ),
         )
       : []
-
-  /* =======================================================
-     LOAD MODULES
-     ======================================================= */
 
   const loadModules =
     useCallback(
@@ -1669,13 +1562,6 @@ function StudentDashboard() {
       [],
     )
 
-  /*
-   * Load all semester modules when
-   * degree changes.
-   *
-   * This intentionally does NOT depend
-   * on modulesBySemester.
-   */
   useEffect(() => {
     if (!degreeId) {
       setModulesBySemester({})
@@ -1823,10 +1709,6 @@ function StudentDashboard() {
       }
     }
 
-  /* =======================================================
-     SAVE PROFILE
-     ======================================================= */
-
   const handleSaveProfile =
     async (
       event: FormEvent,
@@ -1873,14 +1755,6 @@ function StudentDashboard() {
         return
       }
 
-      /*
-       * Current profile validation remains
-       * strict. A current semester must
-       * belong to the selected current year.
-       *
-       * Example:
-       * Year 2 -> Semester 3 or 4 only.
-       */
       if (
         !semesterBelongsToYear(
           numericSemester,
@@ -1914,10 +1788,6 @@ function StudentDashboard() {
             },
           )
 
-        /*
-         * Immediately use the exact
-         * response from the backend.
-         */
         const normalizedSavedProfile:
           StudentProfile = {
           studentId:
@@ -1949,11 +1819,6 @@ function StudentDashboard() {
           normalizedSavedProfile,
         )
 
-        /*
-         * Keep previously saved semester
-         * records that are still valid for
-         * the student's current semester.
-         */
         setSemesterRecords(
           previous =>
             previous.filter(
@@ -1963,18 +1828,6 @@ function StudentDashboard() {
             ),
         )
 
-        /*
-         * Keep SGPA values for all
-         * previously completed/current
-         * semesters.
-         *
-         * IMPORTANT:
-         * Do not filter these by currentYear.
-         *
-         * Example:
-         * Year 2 / Semester 4
-         * keeps S1, S2, S3 and S4.
-         */
         setSgpaValues(
           previous => {
             const next: Record<
@@ -2003,10 +1856,6 @@ function StudentDashboard() {
           },
         )
 
-        /*
-         * Keep grade records for all
-         * completed/current semesters.
-         */
         setGrades(
           previous => {
             const next: Record<
@@ -2064,10 +1913,6 @@ function StudentDashboard() {
       }
     }
 
-  /* =======================================================
-     GRADE SEMESTER
-     ======================================================= */
-
   const maximumAllowedSemester =
     typeof currentSemester ===
     'number'
@@ -2093,10 +1938,7 @@ function StudentDashboard() {
     async (
       semester: number,
     ) => {
-      /*
-       * Previous semesters are allowed.
-       * Only future semesters are blocked.
-       */
+
       if (
         !degreeId ||
         semester >
@@ -2114,10 +1956,6 @@ function StudentDashboard() {
         semester,
       )
     }
-
-  /* =======================================================
-     SELECTED MODULES
-     ======================================================= */
 
   const selectedSemesterModules =
     useMemo(() => {
@@ -2139,20 +1977,11 @@ function StudentDashboard() {
       modulesBySemester,
     ])
 
-  /* =======================================================
-     GRADE UPDATE
-     ======================================================= */
-
   const updateGrade = (
     semester: number,
     courseCode: string,
     grade: string,
   ) => {
-    /*
-     * Students may edit grades for
-     * previous semesters and the current
-     * semester, but never future ones.
-     */
     if (
       semester >
       maximumAllowedSemester
@@ -2216,10 +2045,6 @@ function StudentDashboard() {
     )
   }
 
-  /* =======================================================
-     SAVE GRADES
-     ======================================================= */
-
   const handleSaveGrades =
     async () => {
       if (
@@ -2233,10 +2058,6 @@ function StudentDashboard() {
         return
       }
 
-      /*
-       * Future semesters are not allowed.
-       * Previous semesters ARE allowed.
-       */
       if (
         selectedGradeSemester >
         maximumAllowedSemester
@@ -2303,19 +2124,10 @@ function StudentDashboard() {
       }
     }
 
-  /* =======================================================
-     SGPA UPDATE
-     ======================================================= */
-
   const handleSGPAChange = (
     semester: number,
     value: string,
   ) => {
-    /*
-     * Allow SGPA editing for previous
-     * semesters and the current semester.
-     * Only future semesters are blocked.
-     */
     if (
       maximumAllowedSemester > 0 &&
       semester >
@@ -2342,18 +2154,10 @@ function StudentDashboard() {
     )
   }
 
-  /* =======================================================
-     SAVE SGPA
-     ======================================================= */
-
   const handleSaveSGPA =
     async (
       semester: number,
     ) => {
-      /*
-       * A profile must exist before
-       * academic records can be saved.
-       */
       if (
         maximumAllowedSemester <=
         0
@@ -2364,27 +2168,6 @@ function StudentDashboard() {
         return
       }
 
-      /*
-       * IMPORTANT FIX:
-       *
-       * Do NOT check whether the semester
-       * belongs to currentYear here.
-       *
-       * currentYear describes the student's
-       * CURRENT academic year only.
-       *
-       * A Year 2 / Semester 4 student must
-       * still be able to save:
-       *
-       * S1 -> Year 1
-       * S2 -> Year 1
-       * S3 -> Year 2
-       * S4 -> Year 2
-       *
-       * Therefore, the only restriction here
-       * is that the semester cannot be in
-       * the future.
-       */
       if (
         !isValidSemester(semester)
       ) {
@@ -2458,10 +2241,6 @@ function StudentDashboard() {
           },
         )
 
-        /*
-         * Update local semester records
-         * immediately.
-         */
         setSemesterRecords(
           previous => {
             const existing =
@@ -2517,17 +2296,8 @@ function StudentDashboard() {
           `Semester ${semester} SGPA saved successfully.`,
         )
 
-        /*
-         * Reload dashboard so the UI stays
-         * synchronized with the backend.
-         */
         await loadDashboard()
 
-        /*
-         * Keep the selected grade semester
-         * within the student's current
-         * semester range.
-         */
         setSelectedGradeSemester(
           Math.min(
             semester,
@@ -2547,10 +2317,6 @@ function StudentDashboard() {
         )
       }
     }
-
-  /* =======================================================
-     GPA CALCULATIONS
-     ======================================================= */
 
   const validSemesterRecords =
     useMemo(() => {
@@ -2651,10 +2417,6 @@ function StudentDashboard() {
       return validSemesterRecords.length
     }, [validSemesterRecords])
 
-  /* =======================================================
-     CREDITS
-     ======================================================= */
-
   const selectedSemesterCredits =
     selectedSemesterModules.reduce(
       (sum, module) =>
@@ -2667,10 +2429,6 @@ function StudentDashboard() {
 
   const gradeRows =
     selectedSemesterModules
-
-  /* =======================================================
-     CHART
-     ======================================================= */
 
   const chartMax = 4
 
@@ -2699,9 +2457,6 @@ function StudentDashboard() {
         },
       )
 
-  /* =======================================================
-     PROFILE HEADER
-     ======================================================= */
 
   const displayName =
     user?.fullName ||
@@ -2712,10 +2467,6 @@ function StudentDashboard() {
       .trim()
       .split(/\s+/)[0] ||
     'Student'
-
-  /* =======================================================
-     LOADING
-     ======================================================= */
 
   if (loading) {
     return (
@@ -2740,10 +2491,6 @@ function StudentDashboard() {
   return (
     <main className="student-dashboard">
       <div className="student-page-shell">
-
-        {/* =================================================
-            HERO
-            ================================================= */}
 
         <section className="sd-hero">
           <div className="sd-hero-copy">
@@ -2777,10 +2524,6 @@ function StudentDashboard() {
             </button>
           </div>
         </section>
-
-        {/* =================================================
-            ALERTS
-            ================================================= */}
 
         {message && (
           <div className="sd-alert sd-alert-success">
@@ -2819,10 +2562,6 @@ function StudentDashboard() {
             </button>
           </div>
         )}
-
-        {/* =================================================
-            STUDENT CARD
-            ================================================= */}
 
         <section className="sd-student-card">
 
@@ -2901,10 +2640,6 @@ function StudentDashboard() {
 
         </section>
 
-        {/* =================================================
-            PROFILE
-            ================================================= */}
-
         {profileOpen && (
           <section className="sd-panel sd-profile-panel">
 
@@ -2940,8 +2675,6 @@ function StudentDashboard() {
                 handleSaveProfile
               }
             >
-
-              {/* INTAKE */}
 
               <label className="sd-field">
                 <span>
@@ -2979,8 +2712,6 @@ function StudentDashboard() {
                   )}
                 </select>
               </label>
-
-              {/* FACULTY */}
 
               <label className="sd-field">
                 <span>
@@ -3047,8 +2778,6 @@ function StudentDashboard() {
                 )}
               </label>
 
-              {/* DEGREE */}
-
               <label className="sd-field sd-field-wide">
                 <span>
                   Degree programme
@@ -3105,8 +2834,6 @@ function StudentDashboard() {
                 )}
               </label>
 
-              {/* YEAR */}
-
               <label className="sd-field">
                 <span>
                   Current year
@@ -3138,8 +2865,6 @@ function StudentDashboard() {
                   )}
                 </select>
               </label>
-
-              {/* SEMESTER */}
 
               <label className="sd-field">
                 <span>
@@ -3218,10 +2943,6 @@ function StudentDashboard() {
           </section>
         )}
 
-        {/* =================================================
-            ACADEMIC OVERVIEW
-            ================================================= */}
-
         <section className="sd-section">
 
           <div className="sd-section-heading">
@@ -3276,8 +2997,6 @@ function StudentDashboard() {
 
             </article>
 
-            {/* FGPA */}
-
             <article className="sd-stat-card">
 
               <div className="sd-stat-icon purple">
@@ -3301,8 +3020,6 @@ function StudentDashboard() {
               </div>
 
             </article>
-
-            {/* SEMESTERS */}
 
             <article className="sd-stat-card">
 
@@ -3353,10 +3070,6 @@ function StudentDashboard() {
 
           </div>
         </section>
-
-        {/* =================================================
-            PERFORMANCE + SGPA
-            ================================================= */}
 
         <section className="sd-main-grid">
 
@@ -3479,8 +3192,6 @@ function StudentDashboard() {
               </div>
             </div>
           </article>
-
-          {/* SGPA ENTRY */}
 
           <article className="sd-panel sd-sgpa-panel">
 
@@ -3605,10 +3316,6 @@ function StudentDashboard() {
           </article>
         </section>
 
-        {/* =================================================
-            COURSE GRADES
-            ================================================= */}
-
         <section className="sd-panel sd-modules-panel">
 
           <div className="sd-panel-heading">
@@ -3634,8 +3341,6 @@ function StudentDashboard() {
             </div>
 
           </div>
-
-          {/* SEMESTER TABS */}
 
           <div className="sd-semester-tabs">
 
@@ -4018,10 +3723,6 @@ function StudentDashboard() {
           )}
         </section>
 
-        {/* =================================================
-            AI SERVICES
-            ================================================= */}
-
         <section className="sd-section sd-ai-section">
 
           <div className="sd-section-heading">
@@ -4084,8 +3785,6 @@ function StudentDashboard() {
               </span>
             </Link>
 
-            {/* STUDY PLAN */}
-
             <Link
               to="/study-plan"
               className="sd-ai-card optimization"
@@ -4121,8 +3820,6 @@ function StudentDashboard() {
                 <Icon name="arrow" />
               </span>
             </Link>
-
-            {/* ELIGIBILITY */}
 
             <Link
               to="/eligibility"
@@ -4162,10 +3859,6 @@ function StudentDashboard() {
 
           </div>
         </section>
-
-        {/* =================================================
-            FOOTER NOTE
-            ================================================= */}
 
         <div className="sd-dashboard-note">
 

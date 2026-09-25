@@ -48,14 +48,6 @@ public class StaffDashboardService {
         List<StudentAcademicProfile> profiles =
                 profileRepository.findAllByOrderByIdAsc();
 
-        /*
-         * Count all registered users with STUDENT role.
-         *
-         * This is independent of whether a student has
-         * an academic profile.
-         *
-         * The users table currently contains 6 STUDENT users.
-         */
         long totalStudents =
                 userRepository.countStudentUsers();
 
@@ -74,10 +66,6 @@ public class StaffDashboardService {
                 attentionStudents =
                 new ArrayList<>();
 
-        /*
-         * Evaluate every student using the same EligibilityService
-         * used by the Student Eligibility page.
-         */
         for (StudentAcademicProfile profile : profiles) {
 
             User user = profile.getUser();
@@ -93,12 +81,6 @@ public class StaffDashboardService {
                 continue;
             }
 
-            /*
-             * SINGLE SOURCE OF TRUTH
-             *
-             * EligibilityService determines the current semester
-             * directly from the student's academic profile.
-             */
             EligibilityResponse eligibilityResponse =
                     eligibilityService.evaluateEligibility(
                             user.getStudentId()
@@ -109,10 +91,6 @@ public class StaffDashboardService {
                             ? eligibilityResponse.getStatus()
                             : "CONDITIONALLY_ELIGIBLE";
 
-            /*
-             * Count students according to the actual
-             * eligibility result.
-             */
             switch (status) {
 
                 case "ELIGIBLE" ->
@@ -128,13 +106,6 @@ public class StaffDashboardService {
                         conditionallyEligibleStudents++;
             }
 
-            /*
-             * Retrieve the eligibility record for the student's
-             * actual current semester.
-             *
-             * This is only used for displaying attendance and
-             * fee information.
-             */
             StudentEligibilityRecord eligibilityRecord =
                     eligibilityRepository
                             .findByUser_IdAndSemester(
@@ -143,9 +114,6 @@ public class StaffDashboardService {
                             )
                             .orElse(null);
 
-            /*
-             * Add only students who require attention.
-             */
             if (!"ELIGIBLE".equals(status)) {
 
                 BigDecimal currentSgpa =
@@ -191,13 +159,6 @@ public class StaffDashboardService {
             }
         }
 
-        /*
-         * Highest-priority students appear first.
-         *
-         * NOT_ELIGIBLE
-         * CONDITIONALLY_ELIGIBLE
-         * ELIGIBLE
-         */
         attentionStudents.sort(
                 Comparator
                         .comparingInt(
@@ -213,9 +174,6 @@ public class StaffDashboardService {
                         )
         );
 
-        /*
-         * Display a maximum of 10 students requiring attention.
-         */
         List<StaffDashboardResponse.StudentAttention>
                 topAttentionStudents =
                 attentionStudents.stream()
@@ -236,11 +194,6 @@ public class StaffDashboardService {
         );
     }
 
-    /**
-     * Builds:
-     *
-     * studentId -> semester -> SGPA
-     */
     private Map<Long, Map<Integer, BigDecimal>>
     buildGpaMap() {
 
@@ -272,9 +225,6 @@ public class StaffDashboardService {
         return result;
     }
 
-    /**
-     * Calculates the average SGPA for each semester.
-     */
     private List<StaffDashboardResponse.SemesterPerformance>
     calculateSemesterPerformance() {
 
@@ -291,10 +241,6 @@ public class StaffDashboardService {
                 continue;
             }
 
-            /*
-             * Only valid SGPA values between 0.00 and 4.00
-             * are included.
-             */
             if (record.getSgpa().compareTo(
                     BigDecimal.ZERO
             ) < 0
@@ -343,9 +289,6 @@ public class StaffDashboardService {
                 .toList();
     }
 
-    /**
-     * Calculates the overall average SGPA.
-     */
     private BigDecimal calculateOverallAverageSgpa() {
 
         List<StudentSemesterGpa> records =
@@ -362,9 +305,6 @@ public class StaffDashboardService {
                 continue;
             }
 
-            /*
-             * Ignore invalid SGPA values.
-             */
             if (record.getSgpa().compareTo(
                     BigDecimal.ZERO
             ) < 0
@@ -395,13 +335,6 @@ public class StaffDashboardService {
         );
     }
 
-    /**
-     * Builds the reason displayed in the Staff Dashboard.
-     *
-     * The explanations come directly from EligibilityService,
-     * so the Staff Dashboard and Student Eligibility page use
-     * the same eligibility reasoning.
-     */
     private String buildAttentionReason(
             EligibilityResponse eligibilityResponse
     ) {
@@ -445,9 +378,6 @@ public class StaffDashboardService {
         return "Academic eligibility requires review";
     }
 
-    /**
-     * Identifies explanations that indicate a successful check.
-     */
     private boolean isSuccessfulExplanation(
             String explanation
     ) {
@@ -472,10 +402,6 @@ public class StaffDashboardService {
         );
     }
 
-    /**
-     * Determines the display priority of students requiring
-     * attention.
-     */
     private int attentionPriority(
             StaffDashboardResponse.StudentAttention student
     ) {
@@ -495,12 +421,6 @@ public class StaffDashboardService {
         return 1;
     }
 
-    /**
-     * Updates attendance and fee payment information
-     * for a student.
-     *
-     * This method is used by the Staff Dashboard.
-     */
     public void updateEligibilityData(
             String studentId,
             Integer semester,
@@ -539,12 +459,6 @@ public class StaffDashboardService {
             );
         }
 
-        /*
-         * Find the student directly using student ID.
-         *
-         * This avoids loading all academic profiles just
-         * to locate one student.
-         */
         User user =
                 userRepository
                         .findByStudentId(studentId)
@@ -555,10 +469,6 @@ public class StaffDashboardService {
                                 )
                         );
 
-        /*
-         * Find the existing eligibility record or create
-         * a new one if it does not exist.
-         */
         StudentEligibilityRecord record =
                 eligibilityRepository
                         .findByUser_IdAndSemester(
@@ -576,9 +486,6 @@ public class StaffDashboardService {
                             return newRecord;
                         });
 
-        /*
-         * Update staff-managed eligibility information.
-         */
         record.setAttendancePercentage(
                 attendancePercentage
         );
