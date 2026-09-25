@@ -506,18 +506,19 @@ function normalizeSemesterRecords(
       items = arrayValue
     } else {
       items =
-        Object.entries(record)
-          .map(
-            ([semester, sgpa]) => ({
-              semester,
-              sgpa,
-            }),
-          )
+        Object.entries(record).map(
+          ([semester, sgpa]) => ({
+            semester,
+            sgpa,
+          }),
+        )
     }
   }
 
-  return items
-    .map(item => {
+  const normalized: Array<
+    SemesterRecord | null
+  > = items.map(
+    (item): SemesterRecord | null => {
       if (
         !item ||
         typeof item !== 'object'
@@ -548,6 +549,9 @@ function normalizeSemesterRecords(
       const sgpa =
         Number(sgpaRaw)
 
+      /*
+       * Validate semester.
+       */
       if (
         !Number.isInteger(semester) ||
         !isValidSemester(semester)
@@ -555,6 +559,9 @@ function normalizeSemesterRecords(
         return null
       }
 
+      /*
+       * Validate SGPA.
+       */
       if (
         !Number.isFinite(sgpa) ||
         sgpa < 0 ||
@@ -563,17 +570,66 @@ function normalizeSemesterRecords(
         return null
       }
 
+      /*
+       * Credits are optional.
+       *
+       * Important:
+       * Do not create a required `credits`
+       * property when no credits value exists.
+       */
+      const rawCredits =
+        record.credits
+
+      const credits =
+        rawCredits == null
+          ? undefined
+          : Number(rawCredits)
+
+      /*
+       * Only include credits when a valid
+       * value actually exists.
+       */
+      if (
+        credits !== undefined &&
+        !Number.isFinite(credits)
+      ) {
+        return {
+          semester,
+          sgpa: Number(
+            sgpa.toFixed(4),
+          ),
+        }
+      }
+
+      if (
+        credits !== undefined
+      ) {
+        return {
+          semester,
+          sgpa: Number(
+            sgpa.toFixed(4),
+          ),
+          credits,
+        }
+      }
+
       return {
         semester,
         sgpa: Number(
           sgpa.toFixed(4),
         ),
-        credits:
-          record.credits == null
-            ? undefined
-            : Number(record.credits),
       }
-    })
+    },
+  )
+
+  /*
+   * Remove invalid records.
+   *
+   * `record is SemesterRecord`
+   * is now valid because the array
+   * explicitly contains SemesterRecord | null.
+   */
+  return normalized
     .filter(
       (
         record,

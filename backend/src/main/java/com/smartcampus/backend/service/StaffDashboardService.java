@@ -48,7 +48,16 @@ public class StaffDashboardService {
         List<StudentAcademicProfile> profiles =
                 profileRepository.findAllByOrderByIdAsc();
 
-        long totalStudents = profiles.size();
+        /*
+         * Count all registered users with STUDENT role.
+         *
+         * This is independent of whether a student has
+         * an academic profile.
+         *
+         * The users table currently contains 6 STUDENT users.
+         */
+        long totalStudents =
+                userRepository.countStudentUsers();
 
         Map<Long, Map<Integer, BigDecimal>> gpaByStudent =
                 buildGpaMap();
