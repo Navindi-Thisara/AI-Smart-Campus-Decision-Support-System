@@ -30,3 +30,5 @@ __pycache__/
 smart_campus.sql
 
 smart_campus.sql
+
+.env
