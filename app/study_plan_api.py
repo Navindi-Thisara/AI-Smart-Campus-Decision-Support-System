@@ -28,7 +28,7 @@ from study_plan_ga import (  # noqa: E402
     safe_float,
 )
 
-SPRING_BOOT_BASE_URL = "http://localhost:8080"
+SPRING_BOOT_BASE_URL = "https://ai-smart-campus-decision-support-system-production.up.railway.app"
 
 app = FastAPI(
     title="Smart Campus Personalized Study Plan API",
