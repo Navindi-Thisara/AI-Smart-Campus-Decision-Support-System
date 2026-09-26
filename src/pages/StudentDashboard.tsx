@@ -1,10 +1,11 @@
 import {
-  FormEvent,
   useCallback,
   useEffect,
   useMemo,
   useState,
 } from 'react'
+
+import type { FormEvent } from 'react'
 
 import { Link } from 'react-router-dom'
 
@@ -420,16 +421,19 @@ function normalizeDegreeList(
             : undefined
         )
 
-      return {
+      const degree: Degree = {
         degreeId,
         degreeName,
         facultyId,
-        facultyName:
-          rawFacultyName == null
-            ? undefined
-            : String(
-                rawFacultyName,
-              ).trim(),
+        ...(rawFacultyName != null &&
+        String(rawFacultyName).trim()
+          ? {
+              facultyName:
+                String(
+                  rawFacultyName,
+                ).trim(),
+            }
+          : {}),
         department: String(
           record.department ?? '',
         ),
@@ -440,6 +444,8 @@ function normalizeDegreeList(
           0,
         ),
       }
+
+      return degree
     })
     .filter(
       (
@@ -947,10 +953,10 @@ function StudentDashboard() {
     setReferenceError,
   ] = useState('')
 
-  const [profile, setProfile] =
-    useState<StudentProfile | null>(
-      null,
-    )
+  const [, setProfile] =
+  useState<StudentProfile | null>(
+    null,
+  )
 
   const [intake, setIntake] =
     useState<number | ''>('')
