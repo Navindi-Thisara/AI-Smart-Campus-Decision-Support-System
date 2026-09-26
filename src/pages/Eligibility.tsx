@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import './Eligibility.css'
 
-const BACKEND_URL = 'http://localhost:8080'
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface LoggedInUser {
   studentId?: string
