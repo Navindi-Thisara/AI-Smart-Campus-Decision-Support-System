@@ -26,3 +26,7 @@ dist-ssr
 smartcampus-ai/
 __pycache__/
 *.pyc
+
+smart_campus.sql
+
+smart_campus.sql
