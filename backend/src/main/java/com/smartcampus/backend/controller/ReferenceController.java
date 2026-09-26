@@ -17,7 +17,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/reference")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"http://localhost:5173", "https://kdu-smart-campus-one.vercel.app"})
 public class ReferenceController {
 
     private final FacultyRepository facultyRepository;

@@ -99,3 +99,4 @@ public class StudentAcademicProfile {
         this.currentSemester = currentSemester;
     }
 }
+

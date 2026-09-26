@@ -8,7 +8,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/degrees")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"http://localhost:5173", "https://kdu-smart-campus-one.vercel.app"})
 public class DegreeController {
 
     private final DegreeRepository degreeRepository;
@@ -29,3 +29,4 @@ public class DegreeController {
         return degreeRepository.findByFacultyId(facultyId);
     }
 }
+

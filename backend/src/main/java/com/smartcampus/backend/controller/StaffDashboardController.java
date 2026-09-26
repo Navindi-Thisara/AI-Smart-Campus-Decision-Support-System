@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/staff")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"http://localhost:5173", "https://kdu-smart-campus-one.vercel.app"})
 public class StaffDashboardController {
 
     private final StaffDashboardService staffDashboardService;
@@ -48,4 +48,5 @@ public class StaffDashboardController {
         );
     }
 }
+
 

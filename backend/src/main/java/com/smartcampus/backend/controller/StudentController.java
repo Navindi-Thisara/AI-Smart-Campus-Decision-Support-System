@@ -28,7 +28,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/students")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"http://localhost:5173", "https://kdu-smart-campus-one.vercel.app"})
 public class StudentController {
 
     private final UserRepository userRepository;
@@ -1380,4 +1380,5 @@ public class StudentController {
         }
     }
 }
+
 

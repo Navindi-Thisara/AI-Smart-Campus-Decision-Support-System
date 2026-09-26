@@ -16,7 +16,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/sgpa")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"http://localhost:5173", "https://kdu-smart-campus-one.vercel.app"})
 public class StudentSemesterGpaController {
 
     private final StudentSemesterGpaRepository gpaRepository;
