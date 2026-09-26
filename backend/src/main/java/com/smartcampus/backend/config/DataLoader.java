@@ -8,6 +8,7 @@ import com.smartcampus.backend.repository.CourseModuleRepository;
 import com.smartcampus.backend.repository.DegreeModuleRepository;
 import com.smartcampus.backend.repository.DegreeRepository;
 import com.smartcampus.backend.repository.FacultyRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,9 @@ public class DataLoader implements CommandLineRunner {
     private final CourseModuleRepository courseModuleRepository;
     private final DegreeModuleRepository degreeModuleRepository;
 
+    @Value("${app.data-loader.enabled:true}")
+    private boolean dataLoaderEnabled;
+
     public DataLoader(
             FacultyRepository facultyRepository,
             DegreeRepository degreeRepository,
@@ -38,6 +42,21 @@ public class DataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+
+        if (!dataLoaderEnabled) {
+
+            System.out.println("==========================================");
+            System.out.println("CSV DATA LOADING DISABLED");
+            System.out.println("Using existing database data.");
+            System.out.println("Faculties      : " + facultyRepository.count());
+            System.out.println("Degrees        : " + degreeRepository.count());
+            System.out.println("Course Modules : " + courseModuleRepository.count());
+            System.out.println("Degree Modules : " + degreeModuleRepository.count());
+            System.out.println("==========================================");
+
+            return;
+        }
+
         try {
             loadFaculties();
             loadDegrees();
@@ -53,6 +72,7 @@ public class DataLoader implements CommandLineRunner {
             System.out.println("==========================================");
 
         } catch (Exception e) {
+
             System.err.println("==========================================");
             System.err.println("CSV DATA LOADING FAILED");
             System.err.println(e.getMessage());
@@ -78,8 +98,6 @@ public class DataLoader implements CommandLineRunner {
         try (BufferedReader reader = Files.newBufferedReader(path)) {
 
             String line;
-
-            // Skip header
             reader.readLine();
 
             while ((line = reader.readLine()) != null) {
@@ -125,8 +143,6 @@ public class DataLoader implements CommandLineRunner {
         try (BufferedReader reader = Files.newBufferedReader(path)) {
 
             String line;
-
-            // Skip header
             reader.readLine();
 
             while ((line = reader.readLine()) != null) {
@@ -181,8 +197,6 @@ public class DataLoader implements CommandLineRunner {
         try (BufferedReader reader = Files.newBufferedReader(path)) {
 
             String line;
-
-            // Skip header
             reader.readLine();
 
             while ((line = reader.readLine()) != null) {
@@ -246,8 +260,6 @@ public class DataLoader implements CommandLineRunner {
         try (BufferedReader reader = Files.newBufferedReader(path)) {
 
             String line;
-
-            // Skip header
             reader.readLine();
 
             while ((line = reader.readLine()) != null) {
@@ -267,9 +279,7 @@ public class DataLoader implements CommandLineRunner {
                 String courseCode = values[2].trim();
                 String moduleType = values[3].trim();
 
-                if (!degreeModuleRepository.existsById(
-                        degreeModuleId
-                )) {
+                if (!degreeModuleRepository.existsById(degreeModuleId)) {
 
                     DegreeModule degreeModule = new DegreeModule(
                             degreeModuleId,
