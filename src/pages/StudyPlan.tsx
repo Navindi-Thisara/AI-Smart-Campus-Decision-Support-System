@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './StudyPlan.css'
 
-const API_URL = 'http://127.0.0.1:8001'
+const API_URL = 'https://grateful-vision-production-a04b.up.railway.app'
 
 interface LoggedInUser {
   id: number
