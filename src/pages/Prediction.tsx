@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 
 import './Prediction.css'
 
-const API_URL = 'http://127.0.0.1:8000'
-const BACKEND_URL = 'http://localhost:8080'
+const API_URL = 'https://truthful-recreation-production-641e.up.railway.app'
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface LoggedInUser {
   id: number
