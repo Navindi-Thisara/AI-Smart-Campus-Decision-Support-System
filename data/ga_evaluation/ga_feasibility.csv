@@ -1,0 +1,10 @@
+available_hours,modules,expected_feasible,actual_feasible,feasibility_correct,total_allocated_hours,minimum_constraint_satisfied
+7,9,False,False,True,,False
+8,9,False,False,True,,False
+9,9,True,True,True,9.0,True
+11,9,True,True,True,11.0,True
+14,9,True,True,True,14.0,True
+19,9,True,True,True,19.0,True
+20,9,True,True,True,20.0,True
+30,9,True,True,True,30.0,True
+40,9,True,True,True,40.0,True

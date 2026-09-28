@@ -1,0 +1,4 @@
+student_id,degree_id,current_sgpa,academic_risk,target_semester,target_modules,fitness,allocated_hours,minimum_hours,maximum_hours,runtime_seconds,status
+D/ICT/25/0003,D005,2.0211,Medium Risk,2,9,27.591435398953873,20,2,3,0.4016068000055384,Success
+D/ICT/25/0002,D005,3.1789,Low Risk,2,9,28.30159340390309,20,2,3,0.432237900007749,Success
+D/BCS/25/0006,D002,3.9571,Low Risk,2,9,29.57069236473126,20,2,3,0.41746639998746105,Success
