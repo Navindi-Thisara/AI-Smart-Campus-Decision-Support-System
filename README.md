@@ -282,8 +282,6 @@ spring.datasource.password=YOUR_PASSWORD
 spring.jpa.hibernate.ddl-auto=update
 ```
 
-> ⚠️ Never commit real passwords, API keys, JWT secrets, or other sensitive credentials to GitHub.
-
 ---
 
 ## 🧪 Evaluation
