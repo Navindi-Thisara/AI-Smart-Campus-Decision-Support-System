@@ -210,7 +210,7 @@ Git
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/AI-Smart-Campus-Decision-Support-System.git
+git clone https://github.com/Navindi-Thisara/AI-Smart-Campus-Decision-Support-System.git
 
 cd AI-Smart-Campus-Decision-Support-System
 ```
