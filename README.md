@@ -135,8 +135,6 @@ Together, the system demonstrates three major AI capabilities:
 
 * MySQL
 * Git & GitHub
-* Postman
-* Jupyter Notebook
 * Visual Studio Code
 
 ---
