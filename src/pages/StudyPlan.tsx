@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './StudyPlan.css'
 
-const API_URL = 'https://grateful-vision-production-a04b.up.railway.app'
+const API_URL = import.meta.env.VITE_STUDY_PLAN_API_URL;
 
 interface LoggedInUser {
   id: number

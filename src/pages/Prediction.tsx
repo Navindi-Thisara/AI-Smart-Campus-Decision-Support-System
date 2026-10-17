@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import './Prediction.css'
 
-const API_URL = 'https://truthful-recreation-production-641e.up.railway.app'
+const API_URL = import.meta.env.VITE_AI_API_BASE_URL;
 const BACKEND_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface LoggedInUser {
